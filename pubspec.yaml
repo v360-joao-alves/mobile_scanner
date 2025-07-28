@@ -27,6 +27,8 @@ dependencies:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
   web: ">=0.5.1 <2.0.0"
+  win32: ^5.0.8  # Ensure you have the latest version
+  ffi: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -45,6 +47,8 @@ flutter:
       macos:
         pluginClass: MobileScannerPlugin
         sharedDarwinSource: true
+      windows:
+        pluginClass: MobileScannerPluginCApi
       web:
         pluginClass: MobileScannerWeb
         fileName: src/web/mobile_scanner_web.dart
