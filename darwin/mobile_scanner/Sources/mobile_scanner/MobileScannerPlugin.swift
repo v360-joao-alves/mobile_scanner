@@ -1002,13 +1002,28 @@ extension VNBarcodeObservation {
         let width = distanceBetween(adjustedTopLeft, adjustedTopRight) * CGFloat(imageWidth)
         let height = distanceBetween(adjustedTopLeft, adjustedBottomLeft) * CGFloat(imageHeight)
         var rawBytes: FlutterStandardTypedData? = nil
+        var rawPayloadData: FlutterStandardTypedData? = nil
+        var displayValue: String? = payloadStringValue
+
+        // latin1 to utf8
+        if let payload = payloadStringValue {
+            if let data = payload.data(using: .isoLatin1) {
+                rawBytes = FlutterStandardTypedData(bytes: data)
+                
+                if let fixed = String(data: data, encoding: .utf8) {
+                    displayValue = fixed
+                }
+            }
+
+        }
         
         if #available(iOS 17.0, macOS 14.0, *) {
             if let payloadData = payloadData {
-                rawBytes = FlutterStandardTypedData(bytes: payloadData)
+                rawPayloadData = FlutterStandardTypedData(bytes: payloadData)
             }
         }
-
+        
+        
         let data = [
             // Clockwise, starting from the top-left corner.
             "corners":  [
@@ -1019,8 +1034,9 @@ extension VNBarcodeObservation {
             ],
             "format": symbology.toInt ?? -1,
             "rawBytes": rawBytes,
+            "rawPayloadData": rawPayloadData,
             "rawValue": payloadStringValue,
-            "displayValue": payloadStringValue,
+            "displayValue": displayValue,
             "size": [
                 "width": width,
                 "height": height,

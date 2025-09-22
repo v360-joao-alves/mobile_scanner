@@ -16,10 +16,6 @@ class ScannedBarcodeLabel extends StatelessWidget {
       builder: (context, snapshot) {
         final List<Barcode> scannedBarcodes = snapshot.data?.barcodes ?? [];
 
-        final String values = scannedBarcodes
-            .map((e) => e.displayValue)
-            .join('\n');
-
         if (scannedBarcodes.isEmpty) {
           return const Text(
             'Scan something!',
@@ -28,8 +24,42 @@ class ScannedBarcodeLabel extends StatelessWidget {
           );
         }
 
+        final String displayValues = scannedBarcodes
+            .map((e) => e.displayValue)
+            .join('\n');
+
+        debugPrint('debug displayValue: ${scannedBarcodes.first.displayValue}');
+        debugPrint('debug rawValue: ${scannedBarcodes.first.rawValue}');
+        debugPrint('debug rawBytes: ${scannedBarcodes.first.rawBytes}');
+        debugPrint('debug rawPayloadData: '
+            '${scannedBarcodes.first.rawPayloadData}');
+
+        if (scannedBarcodes.any((e) => e.displayValue != null)) {
+          return Text(
+            'Display values: $displayValues',
+            overflow: TextOverflow.fade,
+            style: const TextStyle(color: Colors.white),
+          );
+        }
+
+        final String rawValues = scannedBarcodes
+            .map((e) => e.rawValue)
+            .join('\n');
+
+        if (scannedBarcodes.any((e) => e.rawValue != null)) {
+          return Text(
+            'Raw values: $rawValues',
+            overflow: TextOverflow.fade,
+            style: const TextStyle(color: Colors.white),
+          );
+        }
+
+        final String rawBytes = scannedBarcodes
+            .map((e) => e.rawBytes)
+            .join('\n');
+
         return Text(
-          values.isEmpty ? 'No display value.' : values,
+          'Raw bytes: $rawBytes',
           overflow: TextOverflow.fade,
           style: const TextStyle(color: Colors.white),
         );

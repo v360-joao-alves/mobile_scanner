@@ -27,6 +27,7 @@ class Barcode {
     this.geoPoint,
     this.phone,
     this.rawBytes,
+    this.rawPayloadData,
     this.rawValue,
     this.size = Size.zero,
     this.sms,
@@ -88,6 +89,7 @@ class Barcode {
       geoPoint: geoPoint == null ? null : GeoPoint.fromNative(geoPoint),
       phone: phone == null ? null : Phone.fromNative(phone),
       rawBytes: data['rawBytes'] as Uint8List?,
+      rawPayloadData: data['rawPayloadData'] as Uint8List?,
       rawValue: data['rawValue'] as String?,
       size:
           barcodeWidth == null || barcodeHeight == null
@@ -129,6 +131,8 @@ class Barcode {
   /// This value may be multiline if line breaks are encoded in the barcode.
   /// This value may include the supplement value.
   ///
+  /// On Apple (iOS & macOS) this value will always be UTF-8.
+  ///
   /// This is null if there is no user-friendly value for the given barcode.
   final String? displayValue;
 
@@ -152,7 +156,15 @@ class Barcode {
   /// This is null if the raw bytes are not available.
   final Uint8List? rawBytes;
 
-  /// The raw value of `UTF-8` encoded barcodes.
+  /// The raw bytes of the barcode, including header & padding bytes.
+  /// Only available on Apple (iOS & macOS).
+  ///
+  /// If the barcode data is not UTF-8 encoded, this is the only way to access
+  /// the data.
+  final Uint8List? rawPayloadData;
+
+  /// The raw value of `UTF-8` encoded barcodes on Android.
+  /// On Apple (iOS and macOS), this value can also be Latin-1 (ISO 8859-1)
   ///
   /// Structured values are not parsed,
   /// for example: 'MEBKM:TITLE:Google;URL://www.google.com;;'.
