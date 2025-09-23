@@ -1,3 +1,7 @@
+## 7.1.1
+
+* Fixed missing import of 'package:meta/meta.dart' on older Flutter sdk's
+
 ## 7.1.0
 
 **Highlights**
