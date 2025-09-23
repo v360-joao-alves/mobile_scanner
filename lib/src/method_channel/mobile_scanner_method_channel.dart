@@ -400,6 +400,8 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
     _textureId = null;
     _pausing = false;
     _surfaceProducerDelegate = null;
+    _eventsStream = null;
+    _deviceOrientationStream = null;
 
     await methodChannel.invokeMethod<void>('stop', {'force': force});
   }
