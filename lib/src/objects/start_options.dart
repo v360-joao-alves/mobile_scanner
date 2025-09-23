@@ -55,7 +55,7 @@ class StartOptions {
   /// The initial zoom scale factor for the camera.
   ///
   /// Currently only supported on iOS, MacOS and Android.
-  final double initialZoom;
+  final double? initialZoom;
 
   /// Converts this object to a map.
   Map<String, Object?> toMap() {

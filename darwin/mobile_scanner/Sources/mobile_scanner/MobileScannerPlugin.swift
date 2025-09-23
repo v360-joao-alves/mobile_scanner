@@ -349,7 +349,13 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
         let facing:Int = argReader.int(key: "facing") ?? 1
         let speed:Int = argReader.int(key: "speed") ?? 0
         let timeoutMs:Int = argReader.int(key: "timeout") ?? 0
-        let initialZoom: CGFloat = CGFloat(argReader.float(key: "initialZoom") ?? 1)
+        let initialZoom: CGFloat? = {
+            if let zoomValue = argReader.float(key: "initialZoom") {
+                return CGFloat(zoomValue)
+            } else {
+                return nil
+            }
+        }()
         symbologies = argReader.toSymbology()
         MobileScannerPlugin.returnImage = argReader.bool(key: "returnImage") ?? false
 
@@ -396,7 +402,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
         captureSession!.beginConfiguration()
         
         // Check the zoom factor at switching from ultra wide camera to wide camera.
-        standardZoomFactor = initialZoom
+        standardZoomFactor = 1
 #if os(iOS)
         if #available(iOS 13.0, *) {
             for (index, actualDevice) in device.constituentDevices.enumerated() {
@@ -473,12 +479,14 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                 }
                 
                 // Set the initial zoom factor
-                do {
-                    try self.setScaleInternal(initialZoom)
-                } catch {
-                    // Do nothing.
+                if (initialZoom != nil) {
+                    do {
+                        try self.setScaleInternal(initialZoom!)
+                    } catch {
+                        // Do nothing.
+                    }
                 }
-
+       
 #if os(iOS)
                 // The height and width are swapped because the default video orientation for ios is landscape right, but mobile_scanner operates in portrait mode.
                 // When mobile_scanner is opened in landscape mode, the Dart code automatically swaps the width and height parameters back to match the correct orientation.

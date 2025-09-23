@@ -347,7 +347,7 @@ class MobileScanner(
         detectionTimeout: Long,
         cameraResolutionWanted: Size?,
         invertImage: Boolean,
-        initialZoom: Double,
+        initialZoom: Double?,
     ) {
         this.detectionSpeed = detectionSpeed
         this.detectionTimeout = detectionTimeout
@@ -477,16 +477,18 @@ class MobileScanner(
                     it.cameraControl.enableTorch(torch)
                 }
 
-                try {
-                    if (initialZoom in 0.0..1.0) {
-                        it.cameraControl.setLinearZoom(initialZoom.toFloat())
-                    } else {
-                        it.cameraControl.setZoomRatio(initialZoom.toFloat())
-                    }
-                } catch (e: Exception) {
-                    mobileScannerErrorCallback(ZoomNotInRange())
+                if (initialZoom != null) {
+                    try {
+                        if (initialZoom in 0.0..1.0) {
+                            it.cameraControl.setLinearZoom(initialZoom.toFloat())
+                        } else {
+                            it.cameraControl.setZoomRatio(initialZoom.toFloat())
+                        }
+                    } catch (e: Exception) {
+                        mobileScannerErrorCallback(ZoomNotInRange())
 
-                    return@addListener
+                        return@addListener
+                    }
                 }
             }
 

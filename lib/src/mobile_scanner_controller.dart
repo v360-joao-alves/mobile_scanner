@@ -35,7 +35,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
     this.torchEnabled = false,
     this.invertImage = false,
     this.autoZoom = false,
-    this.initialZoom = 1,
+    this.initialZoom,
   }) : detectionTimeoutMs =
            detectionSpeed == DetectionSpeed.normal ? detectionTimeoutMs : 0,
        assert(
@@ -119,7 +119,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
   ///
   /// Defaults to no initial zoom and is only supported on iOS, MacOS and
   /// Android.
-  final double initialZoom;
+  final double? initialZoom;
 
   /// The internal barcode controller, that listens for detected barcodes.
   final StreamController<BarcodeCapture> _barcodesController =
