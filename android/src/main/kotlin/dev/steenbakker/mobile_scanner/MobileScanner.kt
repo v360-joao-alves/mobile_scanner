@@ -320,7 +320,7 @@ class MobileScanner(
             val scaledScanWindow = Rect(left, top, right, bottom)
 
             return scaledScanWindow.contains(barcodeBoundingBox)
-        } catch (exception: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // Rounding of the scan window dimensions can fail, due to encountering NaN.
             // If we get NaN, rather than give a false positive, just return false.
             return false
@@ -452,7 +452,7 @@ class MobileScanner(
                     analysis
                 )
                 cameraSelector = cameraPosition
-            } catch(exception: Exception) {
+            } catch(_: Exception) {
                 mobileScannerErrorCallback(NoCamera())
 
                 return@addListener
@@ -636,7 +636,7 @@ class MobileScanner(
 
         try {
             inputImage = InputImage.fromFilePath(activity, image)
-        } catch (error: IOException) {
+        } catch (_: IOException) {
             onError(MobileScannerErrorCodes.ANALYZE_IMAGE_NO_VALID_IMAGE_ERROR_MESSAGE)
 
             return
