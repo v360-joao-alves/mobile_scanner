@@ -46,7 +46,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 23
+        minSdk 23
         consumerProguardFiles 'proguard-rules.pro'
     }
 
