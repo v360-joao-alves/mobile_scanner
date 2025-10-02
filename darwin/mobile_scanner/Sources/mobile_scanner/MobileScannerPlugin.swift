@@ -795,29 +795,28 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
     }
 
     private func releaseCamera() {
-        guard let captureSession = captureSession else {
-            return
+        if let captureSession = captureSession {
+            captureSession.stopRunning()
+            for input in captureSession.inputs {
+                captureSession.removeInput(input)
+            }
+            for output in captureSession.outputs {
+                captureSession.removeOutput(output)
+            }
+            
+            self.captureSession = nil
         }
-
-        guard let device = device else {
-            return
-        }
-
-        captureSession.stopRunning()
-        for input in captureSession.inputs {
-            captureSession.removeInput(input)
-        }
-        for output in captureSession.outputs {
-            captureSession.removeOutput(output)
-        }
-        device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.torchMode))
+        
+        if let device = device {
+            device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.torchMode))
 #if os(iOS)
-        device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.videoZoomFactor))
+            device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.videoZoomFactor))
 #endif
-
+            self.device = nil
+        }
         latestBuffer = nil
-        self.captureSession = nil
-        self.device = nil
+        self.photoOutput = nil
+        self.photoCompletionHandler = nil
     }
 
     private func releaseTexture() {
