@@ -815,8 +815,6 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             self.device = nil
         }
         latestBuffer = nil
-        self.photoOutput = nil
-        self.photoCompletionHandler = nil
     }
 
     private func releaseTexture() {
