@@ -1,3 +1,7 @@
+## NEXT
+
+* [Android] Changed minSDK from 21 to 23 in line with Flutter requirements.
+
 ## 7.1.2
 
 * Fixed an issue with the `initialZoom` parameter.
