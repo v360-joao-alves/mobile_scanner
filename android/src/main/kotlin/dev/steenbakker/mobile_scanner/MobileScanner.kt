@@ -364,7 +364,7 @@ class MobileScanner(
 //                  MobileScannerStartParameters(
 //                    if (portrait) width else height,
 //                    if (portrait) height else width,
-//                    deviceOrientationListener.getUIOrientation().serialize(),
+//                    deviceOrientationListener.getOrientation().serialize(),
 //                    sensorRotationDegrees,
 //                    surfaceProducer!!.handlesCropAndRotation(),
 //                    currentTorchState,
@@ -516,7 +516,7 @@ class MobileScanner(
                 MobileScannerStartParameters(
                     if (portrait) width else height,
                     if (portrait) height else width,
-                    deviceOrientationListener.getUIOrientation().serialize(),
+                    deviceOrientationListener.getOrientation().serialize(),
                     sensorRotationDegrees,
                     surfaceProducer!!.handlesCropAndRotation(),
                     currentTorchState,
