@@ -1,5 +1,3 @@
-# Changelog
-
 ## NEXT
 
 ### Fixed
