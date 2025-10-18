@@ -58,7 +58,8 @@ class BarcodePainter extends CustomPainter {
       return;
     }
 
-    final bool isLandscape = deviceOrientation == DeviceOrientation.landscapeLeft ||
+    final bool isLandscape =
+        deviceOrientation == DeviceOrientation.landscapeLeft ||
         deviceOrientation == DeviceOrientation.landscapeRight;
 
     final Size adjustedCameraPreviewSize =
@@ -70,7 +71,8 @@ class BarcodePainter extends CustomPainter {
     final double horizontalPadding =
         (adjustedCameraPreviewSize.width * ratios.widthRatio - size.width) / 2;
     final double verticalPadding =
-        (adjustedCameraPreviewSize.height * ratios.heightRatio - size.height) / 2;
+        (adjustedCameraPreviewSize.height * ratios.heightRatio - size.height) /
+        2;
 
     final List<Offset> adjustedOffset = [
       for (final offset in barcodeCorners)
