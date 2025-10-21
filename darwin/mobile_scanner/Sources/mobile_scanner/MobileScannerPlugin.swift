@@ -161,12 +161,11 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             imagesCurrentlyBeingProcessed = true
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else {
-                    imagesCurrentlyBeingProcessed = false
                     return
                 }
                 
                 guard let buffer = self.latestBuffer else {
-                    imagesCurrentlyBeingProcessed = false
+                    self.imagesCurrentlyBeingProcessed = false
                     return
                 }
                 
@@ -175,7 +174,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                 let status = VTCreateCGImageFromCVPixelBuffer(buffer, options: nil, imageOut: &cgImage)
                 
                 guard status == kCVReturnSuccess, let currentImage = cgImage else {
-                    imagesCurrentlyBeingProcessed = false
+                    self.imagesCurrentlyBeingProcessed = false
                     return
                 }
                 
@@ -210,7 +209,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                         
                         if MobileScannerPlugin.returnImage,
                            let imageBytes = currentImage.jpegData(compressionQuality: 0.8) {
-                            bytes = imageBytes
+                            bytes = FlutterStandardTypedData(bytes: imageBytes)
                         }
 
                         DispatchQueue.main.async {
