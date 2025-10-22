@@ -120,14 +120,17 @@ class MobileScanner(
             scannerTimeout = true
         }
 
-        var bitmap = imageProxy.toBitmap()
-
-        // Invert image color to support white on black
-        if (invertImage) {
-            bitmap = invertBitmapColors(bitmap)
+        // Create InputImage directly from ImageProxy for better performance
+        // Only convert to Bitmap if we need to invert colors
+        var invertedBitmap: Bitmap? = null
+        val inputImage = if (invertImage) {
+            val bitmap = imageProxy.toBitmap()
+            invertedBitmap = invertBitmapColors(bitmap)
+            bitmap.recycle()
+            InputImage.fromBitmap(invertedBitmap, imageProxy.imageInfo.rotationDegrees)
+        } else {
+            InputImage.fromMediaImage(imageProxy.image!!, imageProxy.imageInfo.rotationDegrees)
         }
-
-        val inputImage = InputImage.fromBitmap(bitmap,imageProxy.imageInfo.rotationDegrees)
 
         scanner?.let {
             it.process(inputImage).addOnSuccessListener { barcodes ->
@@ -172,18 +175,30 @@ class MobileScanner(
                         null,
                         if (portrait) inputImage.width else inputImage.height,
                         if (portrait) inputImage.height else inputImage.width)
+                    // Clean up the inverted bitmap if we created one
+                    invertedBitmap?.recycle()
                     imageProxy.close()
                     return@addOnSuccessListener
                 }
 
                 // Use Coroutine to process the image and generate the Bitmap to prevent main UI
                 CoroutineScope(Dispatchers.IO).launch {
-                    // Rotate the bitmap based on the camera's rotation degrees
-                    var rotatedBitmap = rotateBitmap(bitmap, camera?.cameraInfo?.sensorRotationDegrees ?: 90)
+                    // Get bitmap for image return. reuse inverted bitmap if available, otherwise create from imageProxy
+                    val baseBitmap = invertedBitmap ?: imageProxy.toBitmap()
 
-                    // Revert inverted image colors
+                    // Rotate the bitmap based on the camera's rotation degrees
+                    var rotatedBitmap = rotateBitmap(baseBitmap, camera?.cameraInfo?.sensorRotationDegrees ?: 90)
+
+                    // Revert inverted image colors for the returned image (MLKit already scanned the inverted version)
                     if (invertImage) {
-                        rotatedBitmap = invertBitmapColors(rotatedBitmap)
+                        val revertedBitmap = invertBitmapColors(rotatedBitmap)
+                        rotatedBitmap.recycle()
+                        rotatedBitmap = revertedBitmap
+                    }
+
+                    // Clean up the base bitmap if it's not needed anymore
+                    if (baseBitmap != rotatedBitmap) {
+                        baseBitmap.recycle()
                     }
 
                     // Convert the final bitmap to JPEG byte array
