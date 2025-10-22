@@ -76,6 +76,7 @@ class MobileScanner(
     private var lastScanned: List<String?>? = null
     private var scannerTimeout = false
     private var displayListener: DisplayManager.DisplayListener? = null
+    private var analysisExecutor = Executors.newSingleThreadExecutor()
 
     /// Configurable variables
     var scanWindow: List<Float>? = null
@@ -395,7 +396,7 @@ class MobileScanner(
         scanner = barcodeScannerFactory(barcodeScannerOptions)
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(activity)
-        val executor = ContextCompat.getMainExecutor(activity)
+        val mainExecutor = ContextCompat.getMainExecutor(activity)
 
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
@@ -456,7 +457,7 @@ class MobileScanner(
                 )
             }
 
-            val analysis = analysisBuilder.build().apply { setAnalyzer(executor, captureOutput) }
+            val analysis = analysisBuilder.build().apply { setAnalyzer(analysisExecutor, captureOutput) }
 
             try {
                 camera = cameraProvider?.bindToLifecycle(
@@ -537,7 +538,7 @@ class MobileScanner(
                     cameraDirection,
                 )
             )
-        }, executor)
+        }, mainExecutor)
 
     }
 
@@ -614,6 +615,11 @@ class MobileScanner(
         scanner?.close()
         scanner = null
         lastScanned = null
+
+        // Shutdown the analysis executor
+        analysisExecutor.shutdown()
+        // Create a new executor for potential restart
+        analysisExecutor = Executors.newSingleThreadExecutor()
     }
 
     private fun isStopped() = camera == null && preview == null
