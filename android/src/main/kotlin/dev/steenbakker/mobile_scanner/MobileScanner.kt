@@ -20,7 +20,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ExperimentalLensFacing
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageAnalysis.OUTPUT_IMAGE_FORMAT_NV21
+import androidx.camera.core.ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.MeteringPoint
 import androidx.camera.core.MeteringPointFactory
@@ -41,7 +41,6 @@ import com.google.mlkit.vision.common.InputImage
 import dev.steenbakker.mobile_scanner.objects.DetectionSpeed
 import dev.steenbakker.mobile_scanner.objects.MobileScannerErrorCodes
 import dev.steenbakker.mobile_scanner.objects.MobileScannerStartParameters
-import dev.steenbakker.mobile_scanner.utils.convertImageProxyToBitmap
 import dev.steenbakker.mobile_scanner.utils.invertBitmapColors
 import dev.steenbakker.mobile_scanner.utils.rotateBitmap
 import dev.steenbakker.mobile_scanner.utils.serialize
@@ -114,20 +113,21 @@ class MobileScanner(
      */
     @ExperimentalGetImage
     val captureOutput = ImageAnalysis.Analyzer { imageProxy ->
-        val mediaImage = imageProxy.image ?: return@Analyzer
-
-        val inputImage = if (invertImage) {
-            invertInputImage(imageProxy)
-        } else {
-            InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-        }
-
         if (detectionSpeed == DetectionSpeed.NORMAL && scannerTimeout) {
             imageProxy.close()
             return@Analyzer
         } else if (detectionSpeed == DetectionSpeed.NORMAL) {
             scannerTimeout = true
         }
+
+        var bitmap = imageProxy.toBitmap()
+
+        // Invert image color to support white on black
+        if (invertImage) {
+            bitmap = invertBitmapColors(bitmap)
+        }
+
+        val inputImage = InputImage.fromBitmap(bitmap,imageProxy.imageInfo.rotationDegrees)
 
         scanner?.let {
             it.process(inputImage).addOnSuccessListener { barcodes ->
@@ -176,28 +176,23 @@ class MobileScanner(
                     return@addOnSuccessListener
                 }
 
-                // Use Coroutine to process the image and generate the Bitmap
+                // Use Coroutine to process the image and generate the Bitmap to prevent main UI
                 CoroutineScope(Dispatchers.IO).launch {
-                    // Convert ImageProxy to Bitmap
-                    val bitmap = convertImageProxyToBitmap(imageProxy)
-
                     // Rotate the bitmap based on the camera's rotation degrees
-                    val rotatedBitmap = rotateBitmap(bitmap, camera?.cameraInfo?.sensorRotationDegrees ?: 90)
+                    var rotatedBitmap = rotateBitmap(bitmap, camera?.cameraInfo?.sensorRotationDegrees ?: 90)
 
-                    // Invert colors if needed
-                    val finalBitmap = if (invertImage) {
-                        invertBitmapColors(rotatedBitmap)
-                    } else {
-                        rotatedBitmap
+                    // Revert inverted image colors
+                    if (invertImage) {
+                        rotatedBitmap = invertBitmapColors(rotatedBitmap)
                     }
 
-                    // Convert the final bitmap to PNG byte array
+                    // Convert the final bitmap to JPEG byte array
                     val stream = ByteArrayOutputStream()
-                    finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
                     val byteArray = stream.toByteArray()
 
-                    val bmWidth = finalBitmap.width
-                    val bmHeight = finalBitmap.height
+                    val bmWidth = rotatedBitmap.width
+                    val bmHeight = rotatedBitmap.height
 
                     // Call the callback with the result
                     mobileScannerCallback(
@@ -208,10 +203,9 @@ class MobileScanner(
                     )
 
                     // Clean up resources
-                    finalBitmap.recycle()
+                    rotatedBitmap.recycle()
                     imageProxy.close()
                 }
-
             }.addOnFailureListener { e ->
                 mobileScannerErrorCallback(
                     e.localizedMessage ?: e.toString()
@@ -411,7 +405,7 @@ class MobileScanner(
             // Build the analyzer to be passed on to MLKit
             val analysisBuilder = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_NV21)
+                .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_YUV_420_888)
             val displayManager = activity.applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
             val cameraResolution =  cameraResolutionWanted ?: Size(1920, 1080)
@@ -623,24 +617,6 @@ class MobileScanner(
                 TorchState.ON -> it.cameraControl.enableTorch(false)
             }
         }
-    }
-
-    /**
-     * Inverts the image colours respecting the alpha channel
-     */
-    @ExperimentalGetImage
-    fun invertInputImage(imageProxy: ImageProxy): InputImage {
-        // Convert ImageProxy to Bitmap
-        val bitmap = convertImageProxyToBitmap(imageProxy)
-
-        // Invert the bitmap colors
-        val invertedBitmap = invertBitmapColors(bitmap)
-
-        // Return the inverted InputImage
-        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
-        imageProxy.close()  // Close the ImageProxy after use
-
-        return InputImage.fromBitmap(invertedBitmap, rotationDegrees)
     }
 
     /**
