@@ -114,6 +114,8 @@ class MobileScanner(
      */
     @ExperimentalGetImage
     val captureOutput = ImageAnalysis.Analyzer { imageProxy ->
+        val mediaImage = imageProxy.image ?: return@Analyzer
+
         if (detectionSpeed == DetectionSpeed.NORMAL && scannerTimeout) {
             imageProxy.close()
             return@Analyzer
@@ -130,7 +132,7 @@ class MobileScanner(
             bitmap.recycle()
             InputImage.fromBitmap(invertedBitmap, imageProxy.imageInfo.rotationDegrees)
         } else {
-            InputImage.fromMediaImage(imageProxy.image!!, imageProxy.imageInfo.rotationDegrees)
+            InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         }
 
         scanner?.let {
