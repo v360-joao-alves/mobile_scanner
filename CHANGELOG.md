@@ -1,3 +1,38 @@
+## NEXT
+
+* [Android] Removed deprecated renderscript api's, improved performance for analysis.
+
+### 7.1.3
+
+* [Android] Refactored orientation detection to use `OrientationEventListener` instead of `BroadcastReceiver` for `ACTION_CONFIGURATION_CHANGED`, ensuring physical device orientation is captured correctly and preventing unwanted screen rotations on `MobileScanner` initialization [](https://github.com/juliansteenbakker/mobile_scanner/issues/1486).
+* Overlay: Updated `BarcodePainter` to receive `deviceOrientation` and dynamically adjust `cameraPreviewSize`, fixing barcode overlay misalignment during device rotation changes [](https://github.com/juliansteenbakker/mobile_scanner/issues/1462).
+
+* [Android] Changed minSDK from 21 to 23 in line with Flutter requirements.
+* [Apple] Fixed a bug where invalid images would cause crashes when processing them with CoreVideo.
+
+## 7.1.2
+
+* Fixed an issue with the `initialZoom` parameter.
+
+## 7.1.1
+
+* Fixed missing import of 'package:meta/meta.dart' on older Flutter sdk's
+
+## 7.1.0
+
+**Highlights**
+
+* [Apple & Android] Added tap to focus functionality. You can enable it in the `MobileScanner` widget.
+* [Apple & Android] You can now set the initial zoom factor using the `initialZoom` parameter in the `startOptions`.
+
+**Bug Fixes and Improvements**
+
+* [iOS] Increased minimum os level to 13 due to Flutter requirements.
+* [macOS] Increased minimum os level to 10.15 due to Flutter requirements.
+* [Android] Update to Java 17, and update other dependencies.
+* [Apple] Improved fallback for when camera is not found.
+* Added a `Barcode.scaleCorners()` method.
+
 ## 7.0.1
 
 * Added error handling for when `MobileScannerController.start` is called without an active `MobileScanner` widget.
@@ -6,7 +41,7 @@
 
 This version finalizes all changes from the beta and release candidate cycles and introduces major improvements, bug fixes, and breaking changes.
 
-**BREAKING CHANGES:**
+**BREAKING CHANGES**
 
 * Requires Flutter 3.29.0 or higher.
 * The initial camera facing direction in `MobileScannerState` is now `CameraFacing.unknown`.
@@ -182,6 +217,9 @@ Known issues:
 * [Apple] The zoom slider does not work correctly.
 * [Apple] The scan window does not work correctly.
 * [Apple] The camera flash briefly shows when the camera is started.
+
+## 6.0.11
+* [Android] Update camerax dependencies to support 16KB pages sizes.
 
 ## 6.0.10
 * [Apple] Fixed a crash when stopping the camera when the camera device is nil.

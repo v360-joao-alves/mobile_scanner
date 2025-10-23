@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+// ignore: unnecessary_import needed for older Flutter sdk's
+import 'package:meta/meta.dart';
 import 'package:mobile_scanner/src/enums/barcode_format.dart';
 import 'package:mobile_scanner/src/enums/camera_facing.dart';
 import 'package:mobile_scanner/src/enums/detection_speed.dart';
@@ -33,6 +35,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
     this.torchEnabled = false,
     this.invertImage = false,
     this.autoZoom = false,
+    this.initialZoom,
   }) : detectionTimeoutMs =
            detectionSpeed == DetectionSpeed.normal ? detectionTimeoutMs : 0,
        assert(
@@ -112,6 +115,12 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
   /// Only supported on Android.
   final bool autoZoom;
 
+  /// The initial zoom scale for the camera.
+  ///
+  /// Defaults to no initial zoom and is only supported on iOS, MacOS and
+  /// Android.
+  final double? initialZoom;
+
   /// The internal barcode controller, that listens for detected barcodes.
   final StreamController<BarcodeCapture> _barcodesController =
       StreamController.broadcast();
@@ -134,10 +143,10 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
   final Completer<void> _isAttachedCompleter = Completer<void>();
 
   void _disposeListeners() {
-    _barcodesSubscription?.cancel();
-    _torchStateSubscription?.cancel();
-    _zoomScaleSubscription?.cancel();
-    _deviceOrientationSubscription?.cancel();
+    unawaited(_barcodesSubscription?.cancel());
+    unawaited(_torchStateSubscription?.cancel());
+    unawaited(_zoomScaleSubscription?.cancel());
+    unawaited(_deviceOrientationSubscription?.cancel());
 
     _barcodesSubscription = null;
     _torchStateSubscription = null;
@@ -318,6 +327,26 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
     await MobileScannerPlatform.instance.setZoomScale(clampedZoomScale);
   }
 
+  /// Set the focus point for the camera.
+  ///
+  /// The [position] must be a point between `0,0` and `1,1`, both inclusive.
+  ///
+  /// Does nothing if the camera is not running.
+  Future<void> setFocusPoint(Offset position) async {
+    _throwIfNotInitialized();
+
+    if (!value.isRunning) {
+      return;
+    }
+
+    final Offset clampedPosition = Offset(
+      position.dx.clamp(0, 1),
+      position.dy.clamp(0, 1),
+    );
+
+    await MobileScannerPlatform.instance.setFocusPoint(clampedPosition);
+  }
+
   /// Start scanning for barcodes.
   ///
   /// The [cameraDirection] can be used to specify the camera direction.
@@ -407,6 +436,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
       torchEnabled: torchEnabled,
       invertImage: invertImage,
       autoZoom: autoZoom,
+      initialZoom: initialZoom,
     );
 
     try {

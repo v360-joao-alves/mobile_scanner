@@ -101,6 +101,8 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             toggleTorch(result)
         case "setScale":
             setScale(call, result)
+        case "setFocus":
+            setFocus(call, result)
         case "resetScale":
             resetScale(call, result)
         case "pause":
@@ -130,10 +132,11 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
     
     // FlutterTexture
     public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-        if latestBuffer == nil {
+        guard let buffer = latestBuffer else {
             return nil
         }
-        return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
+
+        return Unmanaged<CVPixelBuffer>.passRetained(buffer)
     }
     
     var nextScanTime = 0.0
@@ -157,12 +160,26 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             nextScanTime = currentTime + timeoutSeconds
             imagesCurrentlyBeingProcessed = true
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                if self!.latestBuffer == nil {
+                guard let self = self else {
                     return
                 }
-                var cgImage: CGImage?
-                VTCreateCGImageFromCVPixelBuffer(self!.latestBuffer, options: nil, imageOut: &cgImage)
-                let imageRequestHandler = VNImageRequestHandler(cgImage: cgImage!)
+                
+                guard let buffer = self.latestBuffer else {
+                    self.imagesCurrentlyBeingProcessed = false
+                    return
+                }
+                
+                var cgImage: CGImage? = nil
+                
+                let status = VTCreateCGImageFromCVPixelBuffer(buffer, options: nil, imageOut: &cgImage)
+                
+                guard status == kCVReturnSuccess, let currentImage = cgImage else {
+                    self.imagesCurrentlyBeingProcessed = false
+                    return
+                }
+                
+                let imageRequestHandler = VNImageRequestHandler(cgImage: currentImage)
+                
                 do {
                     let barcodeRequest: VNDetectBarcodesRequest = VNDetectBarcodesRequest(completionHandler: { [weak self] (request, error) in
                         self?.imagesCurrentlyBeingProcessed = false
@@ -187,47 +204,51 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                         let barcodes: [VNBarcodeObservation] = results.compactMap({ barcode in
                             return barcode
                         })
+                        
+                        var bytes: FlutterStandardTypedData? = nil
+                        
+                        if MobileScannerPlugin.returnImage,
+                           let imageBytes = currentImage.jpegData(compressionQuality: 0.8) {
+                            bytes = FlutterStandardTypedData(bytes: imageBytes)
+                        }
 
                         DispatchQueue.main.async {
-                            // If the image is nil, use zero as the size.
-                            guard let image = cgImage else {
-                                self?.sink?([
-                                    "name": "barcode",
-                                    "data": barcodes.map({ $0.toMap(imageWidth: 0, imageHeight: 0, scanWindow: nil)}),
-                                ])
-                                return
-                            }
-
-                            // The image dimensions are always provided.
-                            // The image bytes are only non-null when `returnImage` is true.
                             let imageData: [String: Any?] = [
-                                "bytes": MobileScannerPlugin.returnImage ? FlutterStandardTypedData(bytes: image.jpegData(compressionQuality: 0.8)!) : nil,
-                                "width": Double(image.width),
-                                "height": Double(image.height),
+                                "bytes": bytes,
+                                "width": Double(currentImage.width),
+                                "height": Double(currentImage.height),
                             ]
 
                             self?.sink?([
                                 "name": "barcode",
-                                "data": barcodes.map({ $0.toMap(imageWidth: image.width, imageHeight: image.height, scanWindow: self?.scanWindow) }),
                                 "image": imageData,
+                                "data": barcodes.map({
+                                    $0.toMap(
+                                        imageWidth: currentImage.width,
+                                        imageHeight: currentImage.height,
+                                        scanWindow: self?.scanWindow
+                                    )
+                                }),
                             ])
                         }
                     })
 
-                    if self?.symbologies.isEmpty == false {
+                    if self.symbologies.isEmpty == false {
                         // Add the symbologies the user wishes to support.
-                        barcodeRequest.symbologies = self!.symbologies
+                        barcodeRequest.symbologies = self.symbologies
                     }
 
                     // Set the region of interest to match scanWindow
-                    if let scanWindow = self?.scanWindow {
+                    if let scanWindow = self.scanWindow {
                         barcodeRequest.regionOfInterest = scanWindow
                     }
 
                     try imageRequestHandler.perform([barcodeRequest])
                 } catch let error {
+                    imagesCurrentlyBeingProcessed = false
+                    
                     DispatchQueue.main.async {
-                        self?.sink?(FlutterError(
+                        self.sink?(FlutterError(
                             code: MobileScannerErrorCodes.BARCODE_ERROR,
                             message: error.localizedDescription, details: nil))
                     }
@@ -262,7 +283,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
 
     func updateScanWindow(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         let argReader = MapArgumentReader(call.arguments as? [String: Any])
-        let scanWindowData: Array? = argReader.floatArray(key: "rect")
+        let scanWindowData: [CGFloat]? = argReader.floatArray(key: "rect")
 
         if (scanWindowData == nil) {
             scanWindow = nil
@@ -346,6 +367,13 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
         let facing:Int = argReader.int(key: "facing") ?? 1
         let speed:Int = argReader.int(key: "speed") ?? 0
         let timeoutMs:Int = argReader.int(key: "timeout") ?? 0
+        let initialZoom: CGFloat? = {
+            if let zoomValue = argReader.float(key: "initialZoom") {
+                return CGFloat(zoomValue)
+            } else {
+                return nil
+            }
+        }()
         symbologies = argReader.toSymbology()
         MobileScannerPlugin.returnImage = argReader.bool(key: "returnImage") ?? false
 
@@ -360,10 +388,22 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
 #endif
         
         // Open the camera device
+#if os(iOS)
+        if #available(iOS 13.0, *) {
+            device = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInTripleCamera, .builtInDualCamera, .builtInWideAngleCamera], mediaType: .video, position: position).devices.first
+        }
+#else
         if #available(macOS 10.15, *) {
             device = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: position).devices.first
-        } else {
+        }
+#endif
+        
+        if (device == nil) {
             device = AVCaptureDevice.devices(for: .video).filter({$0.position == position}).first
+        }
+        
+        if (device == nil) {
+            device = AVCaptureDevice.default(for: .video)
         }
         
         if (device == nil) {
@@ -413,7 +453,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                 message: error.localizedDescription, details: nil))
             return
         }
-        captureSession!.sessionPreset = AVCaptureSession.Preset.photo
+        captureSession!.sessionPreset = AVCaptureSession.Preset.high
 
         // Add video output
         let videoOutput = AVCaptureVideoDataOutput()
@@ -455,7 +495,16 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                 if (torch) {
                     self.turnTorchOn()
                 }
-
+                
+                // Set the initial zoom factor
+                if (initialZoom != nil) {
+                    do {
+                        try self.setScaleInternal(initialZoom!)
+                    } catch {
+                        // Do nothing.
+                    }
+                }
+       
 #if os(iOS)
                 // The height and width are swapped because the default video orientation for ios is landscape right, but mobile_scanner operates in portrait mode.
                 // When mobile_scanner is opened in landscape mode, the Dart code automatically swaps the width and height parameters back to match the correct orientation.
@@ -586,6 +635,43 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
 
     }
     
+    private func setFocus(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+                  let dx = args["dx"] as? CGFloat,
+                  let dy = args["dy"] as? CGFloat else {
+                result(FlutterError(code: MobileScannerErrorCodes.INVALID_FOCUS_POINT,
+                                    message: MobileScannerErrorCodes.INVALID_FOCUS_POINT_MESSAGE,
+                                    details: nil))
+                return
+            }
+            let focusPoint = CGPoint(x: dx, y: dy)
+        
+        do {
+            if (device == nil) {
+                throw MobileScannerError.zoomWhenStopped
+            }
+
+    #if os(iOS)
+                if device.isFocusPointOfInterestSupported {
+                    do {
+                        try device.lockForConfiguration()
+                        device.focusPointOfInterest = focusPoint
+                        device.focusMode = .autoFocus
+                        device.unlockForConfiguration()
+                    } catch {
+                        throw MobileScannerError.zoomError(error)
+                    }
+                }
+    #endif
+        
+            result(nil)
+        } catch {
+            result(FlutterError(code: MobileScannerErrorCodes.GENERIC_ERROR,
+                                message: MobileScannerErrorCodes.GENERIC_ERROR_MESSAGE,
+                                details: nil))
+        }
+    }
+
 #if os(iOS)
     /// Set the device orientation if it differs from previous orientation
     func setDeviceOrientation(orientation: UIDeviceOrientation) {
@@ -890,6 +976,10 @@ class MapArgumentReader {
 
     func int(key: String) -> Int? {
         return (args?[key] as? NSNumber)?.intValue
+    }
+    
+    func float(key: String) -> Float? {
+        return (args?[key] as? NSNumber)?.floatValue
     }
 
     func bool(key: String) -> Bool? {

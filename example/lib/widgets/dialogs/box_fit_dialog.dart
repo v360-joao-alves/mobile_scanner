@@ -46,10 +46,7 @@ class _BoxFitDialogState extends State<BoxFitDialog> {
             child: Column(
               children: [
                 for (final fit in BoxFit.values)
-                  RadioListTile<BoxFit>(
-                    title: Text(fit.name),
-                    value: fit,
-                  ),
+                  RadioListTile<BoxFit>(title: Text(fit.name), value: fit),
               ],
             ),
           ),

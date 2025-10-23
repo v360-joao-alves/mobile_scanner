@@ -80,6 +80,7 @@ class _BarcodeOverlayState extends State<BarcodeOverlay> {
                       style: widget.style,
                       barcodeValue: barcode.rawValue ?? '',
                       textPainter: _textPainter,
+                      deviceOrientation: value.deviceOrientation,
                     ),
                   ),
             ];
