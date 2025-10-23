@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "dev.steenbakker.mobile_scanner_example"
+    namespace = "dev.steenbakker.mobile_scanner_example"
     compileSdk 36
 
     compileOptions {
@@ -44,7 +44,7 @@ android {
         applicationId "dev.steenbakker.mobile_scanner_example"
         minSdkVersion 24
         targetSdkVersion 36
-        ndkVersion flutter.ndkVersion
+        ndkVersion = flutter.ndkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -53,11 +53,11 @@ android {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            signingConfig = signingConfigs.debug
         }
     }
 }
 
 flutter {
-    source '../..'
+    source = '../..'
 }

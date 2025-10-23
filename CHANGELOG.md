@@ -1,5 +1,7 @@
 ## NEXT
 
+* [Android] Removed deprecated renderscript api's, improved performance for analysis.
+
 ### 7.1.3
 
 * [Android] Refactored orientation detection to use `OrientationEventListener` instead of `BroadcastReceiver` for `ACTION_CONFIGURATION_CHANGED`, ensuring physical device orientation is captured correctly and preventing unwanted screen rotations on `MobileScanner` initialization [](https://github.com/juliansteenbakker/mobile_scanner/issues/1486).
