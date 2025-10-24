@@ -19,7 +19,7 @@ void main() {
         ),
       );
 
-      final List<Map<String, Object>> testCases = [
+      final testCases = <Map<String, Object>>[
         {
           'name': 'BoxFit.none',
           'fit': BoxFit.none,
@@ -91,7 +91,7 @@ void main() {
         ),
       );
 
-      final List<Map<String, Object>> testCases = [
+      final testCases = <Map<String, Object>>[
         {
           'name': 'BoxFit.none',
           'fit': BoxFit.none,
@@ -142,7 +142,7 @@ void main() {
 
   group('calculateBoxFitRatio', () {
     group('Standard cases', () {
-      final List<Map<String, Object>> testCases = [
+      final testCases = <Map<String, Object>>[
         {
           'name': 'BoxFit.fill',
           'boxFit': BoxFit.fill,
@@ -192,7 +192,7 @@ void main() {
 
       for (final testCase in testCases) {
         test('${testCase['name']} scaling', () {
-          final ({double heightRatio, double widthRatio}) ratio =
+          final ratio =
               calculateBoxFitRatio(
                 testCase['boxFit']! as BoxFit,
                 cameraPreviewSize,
@@ -206,7 +206,7 @@ void main() {
 
     group('Edge cases', () {
       test('Zero width/height in cameraPreviewSize', () {
-        final ({double heightRatio, double widthRatio}) ratio =
+        final ratio =
             calculateBoxFitRatio(
               BoxFit.fill,
               const Size(0, 640),
@@ -217,7 +217,7 @@ void main() {
       });
 
       test('Zero width/height in target size', () {
-        final ({double heightRatio, double widthRatio}) ratio =
+        final ratio =
             calculateBoxFitRatio(
               BoxFit.fill,
               const Size(480, 640),
@@ -228,7 +228,7 @@ void main() {
       });
 
       test('Equal sizes (no scaling)', () {
-        final ({double heightRatio, double widthRatio}) ratio =
+        final ratio =
             calculateBoxFitRatio(
               BoxFit.fill,
               const Size(480, 640),
@@ -253,7 +253,7 @@ class ScanWindowTestContext {
   final Rect scanWindow;
 
   void testScanWindow(BoxFit fit, Rect expected) {
-    final Rect actual = calculateScanWindowRelativeToTextureInPercentage(
+    final actual = calculateScanWindowRelativeToTextureInPercentage(
       fit,
       scanWindow,
       textureSize: textureSize,

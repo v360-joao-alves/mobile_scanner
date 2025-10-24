@@ -10,16 +10,16 @@ void main() {
         2: DetectionSpeed.unrestricted,
       };
 
-      for (final MapEntry<int, DetectionSpeed> entry in values.entries) {
-        final DetectionSpeed result = DetectionSpeed.fromRawValue(entry.key);
+      for (final entry in values.entries) {
+        final result = DetectionSpeed.fromRawValue(entry.key);
 
         expect(result, entry.value);
       }
     });
 
     test('invalid raw value throws argument error', () {
-      const int negative = -1;
-      const int outOfRange = 3;
+      const negative = -1;
+      const outOfRange = 3;
 
       expect(() => DetectionSpeed.fromRawValue(negative), throwsArgumentError);
       expect(
@@ -35,8 +35,8 @@ void main() {
         DetectionSpeed.unrestricted: 2,
       };
 
-      for (final MapEntry<DetectionSpeed, int> entry in values.entries) {
-        final int result = entry.key.rawValue;
+      for (final entry in values.entries) {
+        final result = entry.key.rawValue;
 
         expect(result, entry.value);
       }

@@ -87,23 +87,23 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       return null;
     }
 
-    final Object? data = event['data'];
+    final data = event['data'];
 
     if (data == null || data is! List<Object?>) {
       return null;
     }
 
-    final List<Map<Object?, Object?>> barcodes =
+    final barcodes =
         data.cast<Map<Object?, Object?>>();
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
-      final Map<Object?, Object?>? imageData =
+      final imageData =
           event['image'] as Map<Object?, Object?>?;
-      final Uint8List? image = imageData?['bytes'] as Uint8List?;
-      final double? width = imageData?['width'] as double?;
-      final double? height = imageData?['height'] as double?;
+      final image = imageData?['bytes'] as Uint8List?;
+      final width = imageData?['width'] as double?;
+      final height = imageData?['height'] as double?;
 
       return BarcodeCapture(
         raw: event,
@@ -143,7 +143,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
   /// Throws a [MobileScannerException] if the permission is not granted.
   Future<void> _requestCameraPermission() async {
     try {
-      final MobileScannerAuthorizationState authorizationState =
+      final authorizationState =
           MobileScannerAuthorizationState.fromRawValue(
             await methodChannel.invokeMethod<int>('state') ?? 0,
           );
@@ -156,7 +156,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
         // So if the permission was denied, request it again.
         case MobileScannerAuthorizationState.denied:
         case MobileScannerAuthorizationState.undetermined:
-          final bool permissionGranted =
+          final permissionGranted =
               await methodChannel.invokeMethod<bool>('request') ?? false;
 
           if (!permissionGranted) {
@@ -209,7 +209,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
     List<BarcodeFormat> formats = const <BarcodeFormat>[],
   }) async {
     try {
-      final Map<Object?, Object?>? result = await methodChannel
+      final result = await methodChannel
           .invokeMapMethod<Object?, Object?>('analyzeImage', {
             'filePath': path,
             'formats':
@@ -282,7 +282,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       throw UnimplementedError('setFocusPoint() has not been implemented.');
     }
 
-    final Map<String, Object?> params = <String, Object?>{
+    final params = <String, Object?>{
       'dx': position.dx,
       'dy': position.dy,
     };
@@ -330,7 +330,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       );
     }
 
-    final int? textureId = startResult['textureId'] as int?;
+    final textureId = startResult['textureId'] as int?;
 
     if (textureId == null) {
       throw const MobileScannerException(
@@ -341,7 +341,7 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       );
     }
 
-    final CameraFacing cameraDirection = CameraFacing.fromRawValue(
+    final cameraDirection = CameraFacing.fromRawValue(
       startResult['cameraDirection'] as int?,
     );
 
@@ -364,8 +364,8 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       initialDeviceOrientation = orientation.parseDeviceOrientation();
     }
 
-    final int? numberOfCameras = startResult['numberOfCameras'] as int?;
-    final TorchState currentTorchState = TorchState.fromRawValue(
+    final numberOfCameras = startResult['numberOfCameras'] as int?;
+    final currentTorchState = TorchState.fromRawValue(
       startResult['currentTorchState'] as int? ?? -1,
     );
 

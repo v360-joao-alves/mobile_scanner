@@ -16,7 +16,6 @@ import 'package:mobile_scanner/src/enums/torch_state.dart';
 import 'package:mobile_scanner/src/method_channel/mobile_scanner_method_channel.dart';
 import 'package:mobile_scanner/src/mobile_scanner_exception.dart';
 import 'package:mobile_scanner/src/mobile_scanner_platform_interface.dart';
-import 'package:mobile_scanner/src/mobile_scanner_view_attributes.dart';
 import 'package:mobile_scanner/src/objects/barcode_capture.dart';
 import 'package:mobile_scanner/src/objects/mobile_scanner_state.dart';
 import 'package:mobile_scanner/src/objects/start_options.dart';
@@ -242,7 +241,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
 
     _disposeListeners();
 
-    final TorchState oldTorchState = value.torchState;
+    final oldTorchState = value.torchState;
 
     // After the camera stopped, set the torch state to off,
     // as the torch state callback is never called when the camera is stopped.
@@ -319,7 +318,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
       return;
     }
 
-    final double clampedZoomScale = zoomScale.clamp(0.0, 1.0);
+    final clampedZoomScale = zoomScale.clamp(0.0, 1.0);
 
     // Update the zoom scale state to the new state.
     // When the platform has updated the zoom scale,
@@ -339,7 +338,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
       return;
     }
 
-    final Offset clampedPosition = Offset(
+    final clampedPosition = Offset(
       position.dx.clamp(0, 1),
       position.dy.clamp(0, 1),
     );
@@ -426,7 +425,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
       value = value.copyWith(isStarting: true);
     }
 
-    final StartOptions options = StartOptions(
+    final options = StartOptions(
       cameraDirection: cameraDirection ?? facing,
       cameraResolution: cameraResolution,
       detectionSpeed: detectionSpeed,
@@ -442,7 +441,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
     try {
       _setupListeners();
 
-      final MobileScannerViewAttributes viewAttributes =
+      final viewAttributes =
           await MobileScannerPlatform.instance.start(options);
 
       if (!_isDisposed) {
@@ -508,8 +507,8 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
   Future<void> switchCamera() async {
     _throwIfNotInitialized();
 
-    final int? availableCameras = value.availableCameras;
-    final CameraFacing cameraDirection = value.cameraDirection;
+    final availableCameras = value.availableCameras;
+    final cameraDirection = value.cameraDirection;
 
     // Do nothing if the amount of cameras is less than 2 cameras.
     // If the the current platform does not provide the amount of cameras,
@@ -552,7 +551,7 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
       return;
     }
 
-    final TorchState torchState = value.torchState;
+    final torchState = value.torchState;
 
     if (torchState == TorchState.unavailable) {
       return;

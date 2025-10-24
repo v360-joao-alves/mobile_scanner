@@ -58,7 +58,7 @@ class _BarcodeOverlayState extends State<BarcodeOverlay> {
         return StreamBuilder<BarcodeCapture>(
           stream: widget.controller.barcodes,
           builder: (context, snapshot) {
-            final BarcodeCapture? barcodeCapture = snapshot.data;
+            final barcodeCapture = snapshot.data;
 
             // No barcode or preview size.
             if (barcodeCapture == null ||

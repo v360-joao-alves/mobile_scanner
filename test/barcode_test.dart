@@ -6,19 +6,19 @@ import 'package:mobile_scanner/src/objects/barcode.dart';
 void main() {
   group('scaleCorners', () {
     test('returns empty list if barcode has no size or corners', () {
-      const Barcode barcode = Barcode();
+      const barcode = Barcode();
 
       expect(barcode.scaleCorners(const Size(100, 100)), isEmpty);
     });
 
     test('returns empty list if barcode has no corners', () {
-      const Barcode barcode = Barcode(size: Size(200, 200));
+      const barcode = Barcode(size: Size(200, 200));
 
       expect(barcode.scaleCorners(const Size(100, 100)), isEmpty);
     });
 
     test('returns zeroed corners if barcode has corners but no size', () {
-      const Barcode barcode = Barcode(
+      const barcode = Barcode(
         corners: [Offset.zero, Offset.zero, Offset.zero, Offset.zero],
       );
 
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('returns zeroed corners if target size is empty', () {
-      const Barcode barcode = Barcode(
+      const barcode = Barcode(
         size: Size(200, 200),
         corners: [
           Offset(50, 50),
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('returns scaled corners', () {
-      const Barcode barcode = Barcode(
+      const barcode = Barcode(
         size: Size(100, 100),
         corners: [
           Offset(25, 25),

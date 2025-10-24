@@ -183,7 +183,7 @@ class _MobileScannerState extends State<MobileScanner>
       return;
     }
 
-    final Rect newScanWindow = calculateScanWindowRelativeToTextureInPercentage(
+    final newScanWindow = calculateScanWindowRelativeToTextureInPercentage(
       widget.fit,
       widget.scanWindow!,
       textureSize: scannerState.size,
@@ -215,8 +215,8 @@ class _MobileScannerState extends State<MobileScanner>
       return;
     }
 
-    final double dx = (newScanWindow.width - scanWindow!.width).abs();
-    final double dy = (newScanWindow.height - scanWindow!.height).abs();
+    final dx = (newScanWindow.width - scanWindow!.width).abs();
+    final dy = (newScanWindow.height - scanWindow!.height).abs();
 
     // The new scan window has changed enough, allow updating the scan window.
     if (dx >= widget.scanWindowUpdateThreshold ||
@@ -238,7 +238,7 @@ class _MobileScannerState extends State<MobileScanner>
           return widget.placeholderBuilder?.call(context) ?? defaultPlaceholder;
         }
 
-        final MobileScannerException? error = value.error;
+        final error = value.error;
         if (error != null) {
           final Widget defaultError = ScannerErrorWidget(error: error);
 
@@ -249,7 +249,7 @@ class _MobileScannerState extends State<MobileScanner>
           builder: (context, constraints) {
             _maybeUpdateScanWindow(value, constraints);
 
-            final Widget? overlay = widget.overlayBuilder?.call(
+            final overlay = widget.overlayBuilder?.call(
               context,
               constraints,
             );
@@ -269,10 +269,10 @@ class _MobileScannerState extends State<MobileScanner>
                 return GestureDetector(
                   child: scannerWidget,
                   onTapUp: (details) async {
-                    final Size size = MediaQuery.sizeOf(context);
-                    final double relativeX =
+                    final size = MediaQuery.sizeOf(context);
+                    final relativeX =
                         details.globalPosition.dx / size.width;
-                    final double relativeY =
+                    final relativeY =
                         details.globalPosition.dy / size.height;
 
                     await controller.setFocusPoint(

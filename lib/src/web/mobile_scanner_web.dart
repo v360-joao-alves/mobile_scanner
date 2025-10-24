@@ -82,7 +82,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
   /// Create the [HTMLVideoElement] along with its parent container
   /// [HTMLDivElement].
   HTMLVideoElement _createVideoElement(int textureId) {
-    final HTMLVideoElement videoElement = HTMLVideoElement();
+    final videoElement = HTMLVideoElement();
 
     videoElement.style
       ..height = '100%'
@@ -135,7 +135,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
     HTMLVideoElement videoElement,
     MediaStream videoStream,
   ) {
-    final MediaTrackSettings? settings = _settingsDelegate.getSettings(
+    final settings = _settingsDelegate.getSettings(
       videoStream,
     );
 
@@ -146,7 +146,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
       return;
     }
 
-    final MediaStreamTrack videoTrack =
+    final videoTrack =
         videoStream.getVideoTracks().toDart.first;
 
     // On MacOS, even though the facing mode is supported, it is not reported.
@@ -174,7 +174,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
       );
     }
 
-    final MediaTrackSupportedConstraints capabilities =
+    final capabilities =
         window.navigator.mediaDevices.getSupportedConstraints();
 
     final MediaStreamConstraints constraints;
@@ -182,7 +182,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
     if (capabilities.isUndefinedOrNull || !capabilities.facingMode) {
       constraints = MediaStreamConstraints(video: true.toJS);
     } else {
-      final String facingMode = _settingsDelegate.getFacingMode(
+      final facingMode = _settingsDelegate.getFacingMode(
         cameraDirection,
       );
 
@@ -193,14 +193,14 @@ class MobileScannerWeb extends MobileScannerPlatform {
 
     try {
       // Retrieving the media devices requests the camera permission.
-      final MediaStream videoStream =
+      final videoStream =
           await window.navigator.mediaDevices.getUserMedia(constraints).toDart;
 
       return videoStream;
     } on DOMException catch (error, stackTrace) {
-      final String errorMessage = error.toString();
+      final errorMessage = error.toString();
 
-      MobileScannerErrorCode errorCode = MobileScannerErrorCode.genericError;
+      var errorCode = MobileScannerErrorCode.genericError;
 
       // Handle both unsupported and permission errors from the web.
       if (errorMessage.contains('NotFoundError') ||
@@ -269,7 +269,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
       if (_barcodeReader!.paused ?? false) {
         await _barcodeReader?.resume();
 
-        final CameraFacing cameraDirection = _settingsDelegate
+        final cameraDirection = _settingsDelegate
             .getCameraDirection(_barcodeReader?.videoStream);
 
         return MobileScannerViewAttributes(
@@ -301,7 +301,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
     );
 
     // Request camera permissions and prepare the video stream.
-    final MediaStream videoStream = await _prepareVideoStream(
+    final videoStream = await _prepareVideoStream(
       startOptions.cameraDirection,
     );
 
@@ -357,13 +357,13 @@ class MobileScannerWeb extends MobileScannerPlatform {
         cancelOnError: false,
       );
 
-      final bool hasTorch = await _barcodeReader?.hasTorch() ?? false;
+      final hasTorch = await _barcodeReader?.hasTorch() ?? false;
 
       if (hasTorch && startOptions.torchEnabled) {
         await _barcodeReader?.setTorchState(TorchState.on);
       }
 
-      final CameraFacing cameraDirection = _settingsDelegate.getCameraDirection(
+      final cameraDirection = _settingsDelegate.getCameraDirection(
         videoStream,
       );
 
