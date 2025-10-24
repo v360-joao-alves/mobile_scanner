@@ -58,23 +58,26 @@ class BarcodePainter extends CustomPainter {
       return;
     }
 
-    final bool isLandscape =
+    final isLandscape =
         deviceOrientation == DeviceOrientation.landscapeLeft ||
         deviceOrientation == DeviceOrientation.landscapeRight;
 
-    final Size adjustedCameraPreviewSize =
+    final adjustedCameraPreviewSize =
         isLandscape ? cameraPreviewSize.flipped : cameraPreviewSize;
 
-    final ({double heightRatio, double widthRatio}) ratios =
-        calculateBoxFitRatio(boxFit, adjustedCameraPreviewSize, size);
+    final ratios = calculateBoxFitRatio(
+      boxFit,
+      adjustedCameraPreviewSize,
+      size,
+    );
 
-    final double horizontalPadding =
+    final horizontalPadding =
         (adjustedCameraPreviewSize.width * ratios.widthRatio - size.width) / 2;
-    final double verticalPadding =
+    final verticalPadding =
         (adjustedCameraPreviewSize.height * ratios.heightRatio - size.height) /
         2;
 
-    final List<Offset> adjustedOffset = [
+    final adjustedOffset = <Offset>[
       for (final offset in barcodeCorners)
         Offset(
           offset.dx * ratios.widthRatio - horizontalPadding,
@@ -85,7 +88,7 @@ class BarcodePainter extends CustomPainter {
     if (adjustedOffset.length < 4) return;
 
     // Draw the rotated rectangle
-    final Path path = Path()..addPolygon(adjustedOffset, true);
+    final path = Path()..addPolygon(adjustedOffset, true);
 
     final paint =
         Paint()
@@ -96,23 +99,23 @@ class BarcodePainter extends CustomPainter {
     canvas.drawPath(path, paint);
 
     // Find center point of the barcode
-    final double centerX = (adjustedOffset[0].dx + adjustedOffset[2].dx) / 2;
-    final double centerY = (adjustedOffset[0].dy + adjustedOffset[2].dy) / 2;
-    final Offset center = Offset(centerX, centerY);
+    final centerX = (adjustedOffset[0].dx + adjustedOffset[2].dx) / 2;
+    final centerY = (adjustedOffset[0].dy + adjustedOffset[2].dy) / 2;
+    final center = Offset(centerX, centerY);
 
     // Calculate rotation angle
-    final double angle = math.atan2(
+    final angle = math.atan2(
       adjustedOffset[1].dy - adjustedOffset[0].dy,
       adjustedOffset[1].dx - adjustedOffset[0].dx,
     );
 
     // Set a smaller font size with auto-resizing logic
-    final double textSize =
+    final textSize =
         (barcodeSize.width * ratios.widthRatio) *
         0.08; // Scales with barcode size
     const double minTextSize = 6; // Minimum readable size
     const double maxTextSize = 12; // Maximum size
-    final double finalTextSize = textSize.clamp(minTextSize, maxTextSize);
+    final finalTextSize = textSize.clamp(minTextSize, maxTextSize);
 
     // Draw barcode value inside the overlay with rotation
     final textSpan = TextSpan(
@@ -127,8 +130,8 @@ class BarcodePainter extends CustomPainter {
     textPainter.text = textSpan;
     textPainter.layout(maxWidth: barcodeSize.width * ratios.widthRatio * 0.6);
 
-    final double textWidth = textPainter.width;
-    final double textHeight = textPainter.height;
+    final textWidth = textPainter.width;
+    final textHeight = textPainter.height;
 
     canvas
       ..save()
@@ -136,13 +139,13 @@ class BarcodePainter extends CustomPainter {
       ..rotate(angle) // Rotate the text to match the barcode
       ..translate(-center.dx, -center.dy);
 
-    final Rect textRect = Rect.fromCenter(
+    final textRect = Rect.fromCenter(
       center: center,
       width: textWidth * 1.1,
       height: textHeight * 1.1,
     );
 
-    final RRect textBackground = RRect.fromRectAndRadius(
+    final textBackground = RRect.fromRectAndRadius(
       textRect,
       const Radius.circular(6),
     );
@@ -160,7 +163,7 @@ class BarcodePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(BarcodePainter oldDelegate) {
-    const ListEquality<Offset> listEquality = ListEquality<Offset>();
+    const listEquality = ListEquality<Offset>();
 
     return !listEquality.equals(oldDelegate.barcodeCorners, barcodeCorners) ||
         oldDelegate.barcodeSize != barcodeSize ||
@@ -191,8 +194,8 @@ class BarcodePainter extends CustomPainter {
   }
 
   // Calculate the scaling ratios for width and height
-  final double widthRatio = size.width / cameraPreviewSize.width;
-  final double heightRatio = size.height / cameraPreviewSize.height;
+  final widthRatio = size.width / cameraPreviewSize.width;
+  final heightRatio = size.height / cameraPreviewSize.height;
 
   switch (boxFit) {
     case BoxFit.fill:
@@ -225,8 +228,7 @@ class BarcodePainter extends CustomPainter {
     case BoxFit.scaleDown:
       // If the content is larger than the large box, scale down to fit;
       // otherwise, no scaling
-      final double ratio =
-          math.min(1, math.min(widthRatio, heightRatio)).toDouble();
+      final ratio = math.min(1, math.min(widthRatio, heightRatio)).toDouble();
       return (widthRatio: ratio, heightRatio: ratio);
   }
 }

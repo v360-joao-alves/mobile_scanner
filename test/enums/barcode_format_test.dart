@@ -22,16 +22,16 @@ void main() {
         4096: BarcodeFormat.aztec,
       };
 
-      for (final MapEntry<int, BarcodeFormat> entry in values.entries) {
-        final BarcodeFormat result = BarcodeFormat.fromRawValue(entry.key);
+      for (final entry in values.entries) {
+        final result = BarcodeFormat.fromRawValue(entry.key);
 
         expect(result, entry.value);
       }
     });
 
     test('invalid raw value throws argument error', () {
-      const int negative = -2;
-      const int outOfRange = 4097;
+      const negative = -2;
+      const outOfRange = 4097;
 
       expect(() => BarcodeFormat.fromRawValue(negative), throwsArgumentError);
       expect(() => BarcodeFormat.fromRawValue(outOfRange), throwsArgumentError);
@@ -56,8 +56,8 @@ void main() {
         BarcodeFormat.aztec: 4096,
       };
 
-      for (final MapEntry<BarcodeFormat, int> entry in values.entries) {
-        final int result = entry.key.rawValue;
+      for (final entry in values.entries) {
+        final result = entry.key.rawValue;
 
         expect(result, entry.value);
       }

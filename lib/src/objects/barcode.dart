@@ -40,26 +40,20 @@ class Barcode {
 
   /// Creates a new [Barcode] instance from the given [data].
   factory Barcode.fromNative(Map<Object?, Object?> data) {
-    final Map<Object?, Object?>? calendarEvent =
-        data['calendarEvent'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? contactInfo =
-        data['contactInfo'] as Map<Object?, Object?>?;
-    final List<Object?>? corners = data['corners'] as List<Object?>?;
-    final Map<Object?, Object?>? driverLicense =
-        data['driverLicense'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? email =
-        data['email'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? geoPoint =
-        data['geoPoint'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? phone =
-        data['phone'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? sms = data['sms'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? size = data['size'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? url = data['url'] as Map<Object?, Object?>?;
-    final Map<Object?, Object?>? wifi = data['wifi'] as Map<Object?, Object?>?;
+    final calendarEvent = data['calendarEvent'] as Map<Object?, Object?>?;
+    final contactInfo = data['contactInfo'] as Map<Object?, Object?>?;
+    final corners = data['corners'] as List<Object?>?;
+    final driverLicense = data['driverLicense'] as Map<Object?, Object?>?;
+    final email = data['email'] as Map<Object?, Object?>?;
+    final geoPoint = data['geoPoint'] as Map<Object?, Object?>?;
+    final phone = data['phone'] as Map<Object?, Object?>?;
+    final sms = data['sms'] as Map<Object?, Object?>?;
+    final size = data['size'] as Map<Object?, Object?>?;
+    final url = data['url'] as Map<Object?, Object?>?;
+    final wifi = data['wifi'] as Map<Object?, Object?>?;
 
-    final double? barcodeWidth = size?['width'] as double?;
-    final double? barcodeHeight = size?['height'] as double?;
+    final barcodeWidth = size?['width'] as double?;
+    final barcodeHeight = size?['height'] as double?;
 
     return Barcode(
       calendarEvent:
@@ -75,8 +69,8 @@ class Barcode {
                 corners.cast<Map<Object?, Object?>>().map((
                   Map<Object?, Object?> e,
                 ) {
-                  final double x = e['x']! as double;
-                  final double y = e['y']! as double;
+                  final x = e['x']! as double;
+                  final y = e['y']! as double;
 
                   return Offset(x, y);
                 }),
@@ -226,8 +220,8 @@ class Barcode {
     // The size and corners are in the same coordinate space,
     // which is the camera input.
     // If the barcode size is unknown, scale to 0,0.
-    final double scaleX = size.width > 0 ? targetSize.width / size.width : 0;
-    final double scaleY = size.height > 0 ? targetSize.height / size.height : 0;
+    final scaleX = size.width > 0 ? targetSize.width / size.width : 0;
+    final scaleY = size.height > 0 ? targetSize.height / size.height : 0;
 
     return [
       for (final Offset offset in corners)

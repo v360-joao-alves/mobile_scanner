@@ -68,7 +68,7 @@ void main() {
 
   group('MobileScanner Widget Tests', () {
     testWidgets('calls onDetect when barcode is scanned', (tester) async {
-      bool wasCalled = false;
+      var wasCalled = false;
       final barcodeStreamController = StreamController<BarcodeCapture>();
 
       when(
@@ -96,7 +96,7 @@ void main() {
     });
 
     testWidgets('displays error UI when an error occurs', (tester) async {
-      const MobileScannerException exception = MobileScannerException(
+      const exception = MobileScannerException(
         errorCode: MobileScannerErrorCode.controllerUninitialized,
       );
 

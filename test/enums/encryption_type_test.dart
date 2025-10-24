@@ -11,16 +11,16 @@ void main() {
         3: EncryptionType.wep,
       };
 
-      for (final MapEntry<int, EncryptionType> entry in values.entries) {
-        final EncryptionType result = EncryptionType.fromRawValue(entry.key);
+      for (final entry in values.entries) {
+        final result = EncryptionType.fromRawValue(entry.key);
 
         expect(result, entry.value);
       }
     });
 
     test('invalid raw value returns EncryptionType.unknown', () {
-      const int negative = -1;
-      const int outOfRange = 4;
+      const negative = -1;
+      const outOfRange = 4;
 
       expect(EncryptionType.fromRawValue(negative), EncryptionType.unknown);
       expect(EncryptionType.fromRawValue(outOfRange), EncryptionType.unknown);
@@ -34,8 +34,8 @@ void main() {
         EncryptionType.wep: 3,
       };
 
-      for (final MapEntry<EncryptionType, int> entry in values.entries) {
-        final int result = entry.key.rawValue;
+      for (final entry in values.entries) {
+        final result = entry.key.rawValue;
 
         expect(result, entry.value);
       }
