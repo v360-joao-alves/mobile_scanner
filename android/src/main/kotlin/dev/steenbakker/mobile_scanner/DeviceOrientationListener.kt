@@ -1,17 +1,12 @@
 package dev.steenbakker.mobile_scanner
 
 import android.app.Activity
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.content.res.Configuration
-import android.os.Build
+import android.hardware.SensorManager
 import android.os.Handler
 import android.os.Looper
-import android.view.Display
+import android.view.OrientationEventListener
 import android.view.Surface
-import android.view.WindowManager
 import dev.steenbakker.mobile_scanner.utils.serialize
 import io.flutter.embedding.engine.systemchannels.PlatformChannel
 import io.flutter.plugin.common.EventChannel
@@ -23,31 +18,13 @@ import io.flutter.plugin.common.EventChannel
  */
 class DeviceOrientationListener(
     private val activity: Activity,
-): BroadcastReceiver(), EventChannel.StreamHandler {
-
-    companion object {
-        // The intent filter for listening to orientation changes.
-        private val orientationIntentFilter = IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED)
-    }
+) : OrientationEventListener(activity, SensorManager.SENSOR_DELAY_NORMAL), EventChannel.StreamHandler {
 
     // The event sink that handles device orientation events.
     private var deviceOrientationEventSink: EventChannel.EventSink? = null
 
     // The last received orientation. This is used to prevent duplicate events.
     private var lastOrientation: PlatformChannel.DeviceOrientation? = null
-    // Whether the device orientation is currently being observed.
-    private var listening = false
-
-    override fun onReceive(context: Context?, intent: Intent?) {
-        val orientation: PlatformChannel.DeviceOrientation = getUIOrientation()
-        if (orientation != lastOrientation) {
-            Handler(Looper.getMainLooper()).post {
-                deviceOrientationEventSink?.success(orientation.serialize())
-            }
-        }
-
-        lastOrientation = orientation
-    }
 
     override fun onListen(event: Any?, eventSink: EventChannel.EventSink?) {
         deviceOrientationEventSink = eventSink
@@ -57,66 +34,43 @@ class DeviceOrientationListener(
         deviceOrientationEventSink = null
     }
 
-    @Suppress("deprecation")
-    private fun getDisplay(): Display {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            activity.display!!
-        } else {
-            (activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
-        }
-    }
-
-    /**
-     * Gets the current user interface orientation.
-     */
-    fun getUIOrientation(): PlatformChannel.DeviceOrientation {
-        val rotation: Int = getDisplay().rotation
-        val orientation: Int = activity.resources.configuration.orientation
-
-        return when(orientation) {
-            Configuration.ORIENTATION_PORTRAIT -> {
-                if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90) {
-                    PlatformChannel.DeviceOrientation.PORTRAIT_UP
-                } else {
-                    PlatformChannel.DeviceOrientation.PORTRAIT_DOWN
-                }
-            }
-            Configuration.ORIENTATION_LANDSCAPE -> {
-                if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90) {
-                    PlatformChannel.DeviceOrientation.LANDSCAPE_LEFT
-                } else {
-                    PlatformChannel.DeviceOrientation.LANDSCAPE_RIGHT
-                }
-            }
-            Configuration.ORIENTATION_UNDEFINED -> PlatformChannel.DeviceOrientation.PORTRAIT_UP
-            else -> PlatformChannel.DeviceOrientation.PORTRAIT_UP
-        }
-    }
-
     /**
      * Start listening to device orientation changes.
      */
     fun start() {
-        if (listening) {
-            return
+        if (canDetectOrientation()) {
+            enable()
         }
-
-        listening = true
-        activity.registerReceiver(this, orientationIntentFilter)
-
-        // Trigger the orientation listener with the current value.
-        onReceive(activity, null)
     }
 
     /**
      * Stop listening to device orientation changes.
      */
     fun stop() {
-        if (!listening) {
+        disable()
+    }
+
+    override fun onOrientationChanged(orientation: Int) {
+        if (orientation == ORIENTATION_UNKNOWN) {
             return
         }
 
-        activity.unregisterReceiver(this)
-        listening = false
+        val newOrientation = when (orientation) {
+            in 45..134 -> PlatformChannel.DeviceOrientation.LANDSCAPE_RIGHT
+            in 135..224 -> PlatformChannel.DeviceOrientation.PORTRAIT_DOWN
+            in 225..314 -> PlatformChannel.DeviceOrientation.LANDSCAPE_LEFT
+            else -> PlatformChannel.DeviceOrientation.PORTRAIT_UP
+        }
+
+        if (newOrientation != lastOrientation) {
+            lastOrientation = newOrientation
+            Handler(Looper.getMainLooper()).post {
+                deviceOrientationEventSink?.success(newOrientation.serialize())
+            }
+        }
+    }
+
+    fun getOrientation(): PlatformChannel.DeviceOrientation {
+        return lastOrientation ?: PlatformChannel.DeviceOrientation.PORTRAIT_UP
     }
 }

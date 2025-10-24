@@ -1,5 +1,5 @@
-group 'dev.steenbakker.mobile_scanner'
-version '1.0-SNAPSHOT'
+group = 'dev.steenbakker.mobile_scanner'
+version = '1.0-SNAPSHOT'
 
 buildscript {
     ext.kotlin_version = '1.8.0'
@@ -26,7 +26,7 @@ apply plugin: 'kotlin-android'
 
 android {
     if (project.android.hasProperty("namespace")) {
-        namespace 'dev.steenbakker.mobile_scanner'
+        namespace = 'dev.steenbakker.mobile_scanner'
     }
 
     compileSdk 36
@@ -46,7 +46,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 21
+        minSdk 23
         consumerProguardFiles 'proguard-rules.pro'
     }
 
