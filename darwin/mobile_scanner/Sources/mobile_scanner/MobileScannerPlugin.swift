@@ -132,10 +132,11 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
     
     // FlutterTexture
     public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-        if latestBuffer == nil {
+        guard let buffer = latestBuffer else {
             return nil
         }
-        return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
+
+        return Unmanaged<CVPixelBuffer>.passRetained(buffer)
     }
     
     var nextScanTime = 0.0
@@ -159,13 +160,26 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
             nextScanTime = currentTime + timeoutSeconds
             imagesCurrentlyBeingProcessed = true
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self = self else { return }
-                if self.latestBuffer == nil {
+                guard let self = self else {
                     return
                 }
-                var cgImage: CGImage?
-                VTCreateCGImageFromCVPixelBuffer(self.latestBuffer, options: nil, imageOut: &cgImage)
-                let imageRequestHandler = VNImageRequestHandler(cgImage: cgImage!)
+                
+                guard let buffer = self.latestBuffer else {
+                    self.imagesCurrentlyBeingProcessed = false
+                    return
+                }
+                
+                var cgImage: CGImage? = nil
+                
+                let status = VTCreateCGImageFromCVPixelBuffer(buffer, options: nil, imageOut: &cgImage)
+                
+                guard status == kCVReturnSuccess, let currentImage = cgImage else {
+                    self.imagesCurrentlyBeingProcessed = false
+                    return
+                }
+                
+                let imageRequestHandler = VNImageRequestHandler(cgImage: currentImage)
+                
                 do {
                     let barcodeRequest: VNDetectBarcodesRequest = VNDetectBarcodesRequest(completionHandler: { [weak self] (request, error) in
                         self?.imagesCurrentlyBeingProcessed = false
@@ -190,29 +204,31 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
                         let barcodes: [VNBarcodeObservation] = results.compactMap({ barcode in
                             return barcode
                         })
+                        
+                        var bytes: FlutterStandardTypedData? = nil
+                        
+                        if MobileScannerPlugin.returnImage,
+                           let imageBytes = currentImage.jpegData(compressionQuality: 0.8) {
+                            bytes = FlutterStandardTypedData(bytes: imageBytes)
+                        }
 
                         DispatchQueue.main.async {
-                            // If the image is nil, use zero as the size.
-                            guard let image = cgImage else {
-                                self?.sink?([
-                                    "name": "barcode",
-                                    "data": barcodes.map({ $0.toMap(imageWidth: 0, imageHeight: 0, scanWindow: nil)}),
-                                ])
-                                return
-                            }
-
-                            // The image dimensions are always provided.
-                            // The image bytes are only non-null when `returnImage` is true.
                             let imageData: [String: Any?] = [
-                                "bytes": MobileScannerPlugin.returnImage ? FlutterStandardTypedData(bytes: image.jpegData(compressionQuality: 0.8)!) : nil,
-                                "width": Double(image.width),
-                                "height": Double(image.height),
+                                "bytes": bytes,
+                                "width": Double(currentImage.width),
+                                "height": Double(currentImage.height),
                             ]
 
                             self?.sink?([
                                 "name": "barcode",
-                                "data": barcodes.map({ $0.toMap(imageWidth: image.width, imageHeight: image.height, scanWindow: self?.scanWindow) }),
                                 "image": imageData,
+                                "data": barcodes.map({
+                                    $0.toMap(
+                                        imageWidth: currentImage.width,
+                                        imageHeight: currentImage.height,
+                                        scanWindow: self?.scanWindow
+                                    )
+                                }),
                             ])
                         }
                     })
@@ -229,6 +245,8 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
 
                     try imageRequestHandler.perform([barcodeRequest])
                 } catch let error {
+                    imagesCurrentlyBeingProcessed = false
+                    
                     DispatchQueue.main.async {
                         self.sink?(FlutterError(
                             code: MobileScannerErrorCodes.BARCODE_ERROR,
@@ -265,7 +283,7 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
 
     func updateScanWindow(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         let argReader = MapArgumentReader(call.arguments as? [String: Any])
-        let scanWindowData: Array? = argReader.floatArray(key: "rect")
+        let scanWindowData: [CGFloat]? = argReader.floatArray(key: "rect")
 
         if (scanWindowData == nil) {
             scanWindow = nil
@@ -795,29 +813,26 @@ public class MobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHandler,
     }
 
     private func releaseCamera() {
-        guard let captureSession = captureSession else {
-            return
+        if let captureSession = captureSession {
+            captureSession.stopRunning()
+            for input in captureSession.inputs {
+                captureSession.removeInput(input)
+            }
+            for output in captureSession.outputs {
+                captureSession.removeOutput(output)
+            }
+            
+            self.captureSession = nil
         }
-
-        guard let device = device else {
-            return
-        }
-
-        captureSession.stopRunning()
-        for input in captureSession.inputs {
-            captureSession.removeInput(input)
-        }
-        for output in captureSession.outputs {
-            captureSession.removeOutput(output)
-        }
-        device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.torchMode))
+        
+        if let device = device {
+            device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.torchMode))
 #if os(iOS)
-        device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.videoZoomFactor))
+            device.removeObserver(self, forKeyPath: #keyPath(AVCaptureDevice.videoZoomFactor))
 #endif
-
+            self.device = nil
+        }
         latestBuffer = nil
-        self.captureSession = nil
-        self.device = nil
     }
 
     private func releaseTexture() {

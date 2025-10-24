@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_scanner/src/overlay/barcode_painter.dart';
 import 'package:mocktail/mocktail.dart';
@@ -40,6 +41,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       )
       // Act: Call the paint method
       .paint(mockCanvas, const Size(200, 200));
@@ -68,6 +70,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       ).paint(mockCanvas, const Size(200, 200));
 
       // Verify that NO draw operations happen
@@ -96,6 +99,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       ).paint(mockCanvas, const Size(200, 200));
 
       // Ensure text rotation is applied
@@ -124,6 +128,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       );
 
       final painter2 = BarcodePainter(
@@ -140,6 +145,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       );
 
       expect(painter1.shouldRepaint(painter2), isTrue);
@@ -166,6 +172,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       );
 
       final painter2 = BarcodePainter(
@@ -182,6 +189,7 @@ void main() {
         style: PaintingStyle.stroke,
         barcodeValue: '123456',
         textPainter: textPainter,
+        deviceOrientation: DeviceOrientation.portraitUp,
       );
 
       expect(painter1.shouldRepaint(painter2), isFalse);
