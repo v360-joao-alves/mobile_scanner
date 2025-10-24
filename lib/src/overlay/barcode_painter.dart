@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// A [CustomPainter] that draws the barcode as an outlined barcode box with
 /// rounded corners and a displayed value.
@@ -15,6 +16,7 @@ class BarcodePainter extends CustomPainter {
     required this.color,
     required this.style,
     required this.textPainter,
+    required this.deviceOrientation,
     this.strokeWidth = 4.0,
   });
 
@@ -45,6 +47,9 @@ class BarcodePainter extends CustomPainter {
   /// The width of the border.
   final double strokeWidth;
 
+  /// The orientation of the device.
+  final DeviceOrientation deviceOrientation;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (barcodeCorners.length < 4 ||
@@ -53,13 +58,21 @@ class BarcodePainter extends CustomPainter {
       return;
     }
 
+    final bool isLandscape =
+        deviceOrientation == DeviceOrientation.landscapeLeft ||
+        deviceOrientation == DeviceOrientation.landscapeRight;
+
+    final Size adjustedCameraPreviewSize =
+        isLandscape ? cameraPreviewSize.flipped : cameraPreviewSize;
+
     final ({double heightRatio, double widthRatio}) ratios =
-        calculateBoxFitRatio(boxFit, cameraPreviewSize, size);
+        calculateBoxFitRatio(boxFit, adjustedCameraPreviewSize, size);
 
     final double horizontalPadding =
-        (cameraPreviewSize.width * ratios.widthRatio - size.width) / 2;
+        (adjustedCameraPreviewSize.width * ratios.widthRatio - size.width) / 2;
     final double verticalPadding =
-        (cameraPreviewSize.height * ratios.heightRatio - size.height) / 2;
+        (adjustedCameraPreviewSize.height * ratios.heightRatio - size.height) /
+        2;
 
     final List<Offset> adjustedOffset = [
       for (final offset in barcodeCorners)
@@ -155,7 +168,8 @@ class BarcodePainter extends CustomPainter {
         oldDelegate.cameraPreviewSize != cameraPreviewSize ||
         oldDelegate.color != color ||
         oldDelegate.style != style ||
-        oldDelegate.barcodeValue != barcodeValue;
+        oldDelegate.barcodeValue != barcodeValue ||
+        oldDelegate.deviceOrientation != deviceOrientation;
   }
 }
 
