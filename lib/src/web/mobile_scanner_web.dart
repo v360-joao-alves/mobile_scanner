@@ -146,8 +146,7 @@ class MobileScannerWeb extends MobileScannerPlatform {
       return;
     }
 
-    final videoTrack =
-        videoStream.getVideoTracks().toDart.first;
+    final videoTrack = videoStream.getVideoTracks().toDart.first;
 
     // On MacOS, even though the facing mode is supported, it is not reported.
     // Use the label for FaceTime cameras to detect the user facing webcam.
@@ -269,8 +268,9 @@ class MobileScannerWeb extends MobileScannerPlatform {
       if (_barcodeReader!.paused ?? false) {
         await _barcodeReader?.resume();
 
-        final cameraDirection = _settingsDelegate
-            .getCameraDirection(_barcodeReader?.videoStream);
+        final cameraDirection = _settingsDelegate.getCameraDirection(
+          _barcodeReader?.videoStream,
+        );
 
         return MobileScannerViewAttributes(
           cameraDirection: cameraDirection,

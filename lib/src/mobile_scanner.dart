@@ -270,10 +270,8 @@ class _MobileScannerState extends State<MobileScanner>
                   child: scannerWidget,
                   onTapUp: (details) async {
                     final size = MediaQuery.sizeOf(context);
-                    final relativeX =
-                        details.globalPosition.dx / size.width;
-                    final relativeY =
-                        details.globalPosition.dy / size.height;
+                    final relativeX = details.globalPosition.dx / size.width;
+                    final relativeY = details.globalPosition.dy / size.height;
 
                     await controller.setFocusPoint(
                       Offset(relativeX, relativeY),

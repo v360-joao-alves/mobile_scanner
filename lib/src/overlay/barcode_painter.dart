@@ -65,8 +65,11 @@ class BarcodePainter extends CustomPainter {
     final adjustedCameraPreviewSize =
         isLandscape ? cameraPreviewSize.flipped : cameraPreviewSize;
 
-    final ratios =
-        calculateBoxFitRatio(boxFit, adjustedCameraPreviewSize, size);
+    final ratios = calculateBoxFitRatio(
+      boxFit,
+      adjustedCameraPreviewSize,
+      size,
+    );
 
     final horizontalPadding =
         (adjustedCameraPreviewSize.width * ratios.widthRatio - size.width) / 2;
@@ -225,8 +228,7 @@ class BarcodePainter extends CustomPainter {
     case BoxFit.scaleDown:
       // If the content is larger than the large box, scale down to fit;
       // otherwise, no scaling
-      final ratio =
-          math.min(1, math.min(widthRatio, heightRatio)).toDouble();
+      final ratio = math.min(1, math.min(widthRatio, heightRatio)).toDouble();
       return (widthRatio: ratio, heightRatio: ratio);
   }
 }

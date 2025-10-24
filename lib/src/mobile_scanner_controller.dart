@@ -441,8 +441,9 @@ class MobileScannerController extends ValueNotifier<MobileScannerState> {
     try {
       _setupListeners();
 
-      final viewAttributes =
-          await MobileScannerPlatform.instance.start(options);
+      final viewAttributes = await MobileScannerPlatform.instance.start(
+        options,
+      );
 
       if (!_isDisposed) {
         value = value.copyWith(

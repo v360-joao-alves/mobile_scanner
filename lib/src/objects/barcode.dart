@@ -40,19 +40,13 @@ class Barcode {
 
   /// Creates a new [Barcode] instance from the given [data].
   factory Barcode.fromNative(Map<Object?, Object?> data) {
-    final calendarEvent =
-        data['calendarEvent'] as Map<Object?, Object?>?;
-    final contactInfo =
-        data['contactInfo'] as Map<Object?, Object?>?;
+    final calendarEvent = data['calendarEvent'] as Map<Object?, Object?>?;
+    final contactInfo = data['contactInfo'] as Map<Object?, Object?>?;
     final corners = data['corners'] as List<Object?>?;
-    final driverLicense =
-        data['driverLicense'] as Map<Object?, Object?>?;
-    final email =
-        data['email'] as Map<Object?, Object?>?;
-    final geoPoint =
-        data['geoPoint'] as Map<Object?, Object?>?;
-    final phone =
-        data['phone'] as Map<Object?, Object?>?;
+    final driverLicense = data['driverLicense'] as Map<Object?, Object?>?;
+    final email = data['email'] as Map<Object?, Object?>?;
+    final geoPoint = data['geoPoint'] as Map<Object?, Object?>?;
+    final phone = data['phone'] as Map<Object?, Object?>?;
     final sms = data['sms'] as Map<Object?, Object?>?;
     final size = data['size'] as Map<Object?, Object?>?;
     final url = data['url'] as Map<Object?, Object?>?;

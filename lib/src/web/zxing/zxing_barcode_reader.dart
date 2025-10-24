@@ -96,8 +96,7 @@ final class ZXingBarcodeReader extends BarcodeReader {
 
     await result?.toDart;
 
-    final settings = _mediaTrackConstraintsDelegate
-        .getSettings(videoStream);
+    final settings = _mediaTrackConstraintsDelegate.getSettings(videoStream);
 
     if (settings != null) {
       _onMediaTrackSettingsChanged?.call(settings);

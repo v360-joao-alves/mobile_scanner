@@ -10,10 +10,8 @@ void main() {
         2: MobileScannerAuthorizationState.denied,
       };
 
-      for (final entry
-          in values.entries) {
-        final result =
-            MobileScannerAuthorizationState.fromRawValue(entry.key);
+      for (final entry in values.entries) {
+        final result = MobileScannerAuthorizationState.fromRawValue(entry.key);
 
         expect(result, entry.value);
       }
@@ -40,8 +38,7 @@ void main() {
         MobileScannerAuthorizationState.denied: 2,
       };
 
-      for (final entry
-          in values.entries) {
+      for (final entry in values.entries) {
         final result = entry.key.rawValue;
 
         expect(result, entry.value);

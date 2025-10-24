@@ -93,14 +93,12 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
       return null;
     }
 
-    final barcodes =
-        data.cast<Map<Object?, Object?>>();
+    final barcodes = data.cast<Map<Object?, Object?>>();
 
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
-      final imageData =
-          event['image'] as Map<Object?, Object?>?;
+      final imageData = event['image'] as Map<Object?, Object?>?;
       final image = imageData?['bytes'] as Uint8List?;
       final width = imageData?['width'] as double?;
       final height = imageData?['height'] as double?;
@@ -143,10 +141,9 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
   /// Throws a [MobileScannerException] if the permission is not granted.
   Future<void> _requestCameraPermission() async {
     try {
-      final authorizationState =
-          MobileScannerAuthorizationState.fromRawValue(
-            await methodChannel.invokeMethod<int>('state') ?? 0,
-          );
+      final authorizationState = MobileScannerAuthorizationState.fromRawValue(
+        await methodChannel.invokeMethod<int>('state') ?? 0,
+      );
 
       switch (authorizationState) {
         // Authorization was already granted, no need to request it again.
@@ -209,17 +206,19 @@ class MethodChannelMobileScanner extends MobileScannerPlatform {
     List<BarcodeFormat> formats = const <BarcodeFormat>[],
   }) async {
     try {
-      final result = await methodChannel
-          .invokeMapMethod<Object?, Object?>('analyzeImage', {
-            'filePath': path,
-            'formats':
-                formats.isEmpty
-                    ? null
-                    : [
-                      for (final BarcodeFormat format in formats)
-                        if (format != BarcodeFormat.unknown) format.rawValue,
-                    ],
-          });
+      final result = await methodChannel.invokeMapMethod<Object?, Object?>(
+        'analyzeImage',
+        {
+          'filePath': path,
+          'formats':
+              formats.isEmpty
+                  ? null
+                  : [
+                    for (final BarcodeFormat format in formats)
+                      if (format != BarcodeFormat.unknown) format.rawValue,
+                  ],
+        },
+      );
 
       return _parseBarcode(result);
     } on PlatformException catch (error) {

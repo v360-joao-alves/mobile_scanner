@@ -192,12 +192,11 @@ void main() {
 
       for (final testCase in testCases) {
         test('${testCase['name']} scaling', () {
-          final ratio =
-              calculateBoxFitRatio(
-                testCase['boxFit']! as BoxFit,
-                cameraPreviewSize,
-                size,
-              );
+          final ratio = calculateBoxFitRatio(
+            testCase['boxFit']! as BoxFit,
+            cameraPreviewSize,
+            size,
+          );
           expect(ratio.widthRatio, testCase['expectedWidth']);
           expect(ratio.heightRatio, testCase['expectedHeight']);
         });
@@ -206,34 +205,31 @@ void main() {
 
     group('Edge cases', () {
       test('Zero width/height in cameraPreviewSize', () {
-        final ratio =
-            calculateBoxFitRatio(
-              BoxFit.fill,
-              const Size(0, 640),
-              const Size(432, 256),
-            );
+        final ratio = calculateBoxFitRatio(
+          BoxFit.fill,
+          const Size(0, 640),
+          const Size(432, 256),
+        );
         expect(ratio.widthRatio, 1.0);
         expect(ratio.heightRatio, 1.0);
       });
 
       test('Zero width/height in target size', () {
-        final ratio =
-            calculateBoxFitRatio(
-              BoxFit.fill,
-              const Size(480, 640),
-              const Size(0, 256),
-            );
+        final ratio = calculateBoxFitRatio(
+          BoxFit.fill,
+          const Size(480, 640),
+          const Size(0, 256),
+        );
         expect(ratio.widthRatio, 1.0);
         expect(ratio.heightRatio, 1.0);
       });
 
       test('Equal sizes (no scaling)', () {
-        final ratio =
-            calculateBoxFitRatio(
-              BoxFit.fill,
-              const Size(480, 640),
-              const Size(480, 640),
-            );
+        final ratio = calculateBoxFitRatio(
+          BoxFit.fill,
+          const Size(480, 640),
+          const Size(480, 640),
+        );
         expect(ratio.widthRatio, 1.0);
         expect(ratio.heightRatio, 1.0);
       });
