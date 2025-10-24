@@ -1,6 +1,7 @@
 ## NEXT
 
 * [Android] Removed deprecated renderscript api's, improved performance for analysis.
+* [Apple] Prevent half-stopped camera state causing false ALREADY_STARTED.
 
 ### 7.1.3
 
