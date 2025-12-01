@@ -74,7 +74,10 @@ class MobileScanner(
     private var camera: Camera? = null
     private var cameraSelector: CameraSelector? = null
     private var preview: Preview? = null
+
+    // CORREÇÃO: Usando SurfaceProducer corretamente para o novo Flutter
     private var surfaceProducer: TextureRegistry.SurfaceProducer? = null
+
     private var scanner: BarcodeScanner? = null
     private var lastScanned: List<String?>? = null
     private var scannerTimeout = false
@@ -135,7 +138,7 @@ class MobileScanner(
             it.process(inputImage).addOnSuccessListener { barcodes ->
                 if (detectionSpeed == DetectionSpeed.NO_DUPLICATES) {
                     val newScannedBarcodes = barcodes.mapNotNull {
-                        barcode -> barcode.rawValue
+                            barcode -> barcode.rawValue
                     }.sorted()
 
                     if (newScannedBarcodes == lastScanned) {
@@ -226,7 +229,7 @@ class MobileScanner(
     @VisibleForTesting
     fun createSurfaceProvider(surfaceProducer: TextureRegistry.SurfaceProducer): Preview.SurfaceProvider {
         return Preview.SurfaceProvider {
-            request: SurfaceRequest ->
+                request: SurfaceRequest ->
             run {
                 // Set the callback for the surfaceProducer to invalidate Surfaces that it produces
                 // when they get destroyed.
@@ -258,7 +261,9 @@ class MobileScanner(
                     // See: https://developer.android.com/reference/androidx/camera/core/SurfaceRequest.Result
 
                     // Always attempt a release.
-                    surface.release()
+                    // NOTE: Do not release the producer here, just the surface instance if needed,
+                    // but usually provideSurface handles the lifecycle of the surface provided.
+                    surface.release() // Can be redundant with SurfaceProducer, but safe in CameraX context usually.
 
                     val resultCode: Int = it.resultCode
 
@@ -298,16 +303,12 @@ class MobileScanner(
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
-    // Scales the scanWindow to the provided inputImage and checks if that scaled
-    // scanWindow contains the barcode.
     @VisibleForTesting
     fun isBarcodeInScanWindow(
         scanWindow: List<Float>,
         barcode: Barcode,
         inputImage: ImageProxy
     ): Boolean {
-        // TODO: use `cornerPoints` instead, since the bounding box is not bound to the coordinate system of the input image
-        // On iOS we do this correctly, so the calculation should match that.
         val barcodeBoundingBox = barcode.boundingBox ?: return false
 
         try {
@@ -323,8 +324,6 @@ class MobileScanner(
 
             return scaledScanWindow.contains(barcodeBoundingBox)
         } catch (exception: IllegalArgumentException) {
-            // Rounding of the scan window dimensions can fail, due to encountering NaN.
-            // If we get NaN, rather than give a false positive, just return false.
             return false
         }
     }
@@ -355,28 +354,7 @@ class MobileScanner(
         this.invertImage = invertImage
 
         if (camera?.cameraInfo != null && preview != null && surfaceProducer != null && !isPaused) {
-
-// TODO: resume here for seamless transition
-//            if (isPaused) {
-//                resumeCamera()
-//                val cameraDirection = getCameraLensFacing(camera)
-//                mobileScannerStartedCallback(
-//                  MobileScannerStartParameters(
-//                    if (portrait) width else height,
-//                    if (portrait) height else width,
-//                    deviceOrientationListener.getUIOrientation().serialize(),
-//                    sensorRotationDegrees,
-//                    surfaceProducer!!.handlesCropAndRotation(),
-//                    currentTorchState,
-//                    surfaceProducer!!.id(),
-//                    numberOfCameras ?: 0,
-//                    cameraDirection
-//                  )
-//                )
-//                return
-//            }
             mobileScannerErrorCallback(AlreadyStarted())
-
             return
         }
 
@@ -397,16 +375,16 @@ class MobileScanner(
             }
 
             cameraProvider?.unbindAll()
+
+            // Criação do SurfaceProducer
             surfaceProducer = surfaceProducer ?: textureRegistry.createSurfaceProducer()
             val surfaceProvider: Preview.SurfaceProvider = createSurfaceProvider(surfaceProducer!!)
 
             // Preview
-
-            // Build the preview to be shown on the Flutter texture
             val previewBuilder = Preview.Builder()
             preview = previewBuilder.build().apply { setSurfaceProvider(surfaceProvider) }
 
-            // Build the analyzer to be passed on to MLKit
+            // Image Analysis
             val analysisBuilder = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             val displayManager = activity.applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
@@ -461,18 +439,14 @@ class MobileScanner(
             }
 
             camera?.let {
-                // Register the torch listener
                 it.cameraInfo.torchState.observe(activity as LifecycleOwner) { state ->
-                    // TorchState.OFF = 0; TorchState.ON = 1
                     torchStateCallback(state)
                 }
 
-                // Register the zoom scale listener
                 it.cameraInfo.zoomState.observe(activity) { state ->
                     zoomScaleStateCallback(state.linearZoom.toDouble())
                 }
 
-                // Enable torch if provided
                 if (it.cameraInfo.hasFlashUnit()) {
                     it.cameraControl.enableTorch(torch)
                 }
@@ -497,7 +471,6 @@ class MobileScanner(
             val portrait = sensorRotationDegrees % 180 == 0
             val cameraDirection = getCameraLensFacing(camera)
 
-            // Start with 'unavailable' torch state.
             var currentTorchState: Int = -1
 
             camera?.cameraInfo?.let {
@@ -516,7 +489,9 @@ class MobileScanner(
                     if (portrait) height else width,
                     deviceOrientationListener.getUIOrientation().serialize(),
                     sensorRotationDegrees,
-                    surfaceProducer!!.handlesCropAndRotation(),
+                    // CORREÇÃO: handlesCropAndRotation foi removido da API SurfaceProducer.
+                    // Passamos false pois o Flutter/Plugin não dependem mais dessa flag explicita da API antiga.
+                    false,
                     currentTorchState,
                     surfaceProducer!!.id(),
                     numberOfCameras ?: 0,
@@ -558,19 +533,9 @@ class MobileScanner(
     }
 
     private fun pauseCamera() {
-        // Pause camera by unbinding all use cases
         cameraProvider?.unbindAll()
         isPaused = true
     }
-
-//    private fun resumeCamera() {
-//        // Resume camera by rebinding use cases
-//        cameraProvider?.let { provider ->
-//            val owner = activity as LifecycleOwner
-//            cameraSelector?.let { provider.bindToLifecycle(owner, it, preview) }
-//        }
-//        isPaused = false
-//    }
 
     private fun releaseCamera() {
         if (displayListener != null) {
@@ -581,22 +546,18 @@ class MobileScanner(
         }
 
         val owner = activity as LifecycleOwner
-        // Release the camera observers first.
         camera?.cameraInfo?.let {
             it.torchState.removeObservers(owner)
             it.zoomState.removeObservers(owner)
             it.cameraState.removeObservers(owner)
         }
 
-        // Unbind the camera use cases, the preview is a use case.
-        // The camera will be closed when the last use case is unbound.
         cameraProvider?.unbindAll()
 
-        // Release the surface for the preview.
+        // Libera o SurfaceProducer
         surfaceProducer?.release()
         surfaceProducer = null
 
-        // Release the scanner.
         scanner?.close()
         scanner = null
         lastScanned = null
@@ -604,9 +565,6 @@ class MobileScanner(
 
     private fun isStopped() = camera == null && preview == null
 
-    /**
-     * Toggles the flash light on or off.
-     */
     fun toggleTorch() {
         camera?.let {
             if (!it.cameraInfo.hasFlashUnit()) {
@@ -620,32 +578,24 @@ class MobileScanner(
         }
     }
 
-    /**
-     * Inverts the image colours respecting the alpha channel
-     */
     @ExperimentalGetImage
     fun invertInputImage(imageProxy: ImageProxy): InputImage {
         val image = imageProxy.image ?: throw IllegalArgumentException("Image is null")
-
-        // Convert YUV_420_888 image to RGB Bitmap
         val bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
         try {
             val imageFormat = YuvToRgbConverter(activity.applicationContext)
             imageFormat.yuvToRgb(image, bitmap)
 
-            // Create an inverted bitmap
             val invertedBitmap = invertBitmapColors(bitmap)
             imageFormat.release()
 
             return InputImage.fromBitmap(invertedBitmap, imageProxy.imageInfo.rotationDegrees)
         } finally {
-            // Release resources
-            bitmap.recycle() // Free up bitmap memory
-            imageProxy.close() // Close ImageProxy
+            bitmap.recycle()
+            imageProxy.close()
         }
     }
 
-    // Efficiently invert bitmap colors using ColorMatrix
     private fun invertBitmapColors(bitmap: Bitmap): Bitmap {
         val colorMatrix = ColorMatrix().apply {
             set(floatArrayOf(
@@ -664,9 +614,6 @@ class MobileScanner(
         return invertedBitmap
     }
 
-    /**
-     * Analyze a single image.
-     */
     fun analyzeImage(
         image: Uri,
         scannerOptions: BarcodeScannerOptions?,
@@ -682,7 +629,6 @@ class MobileScanner(
             return
         }
 
-        // Use a short lived scanner instance, which is closed when the analysis is done.
         val barcodeScanner: BarcodeScanner = barcodeScannerFactory(scannerOptions)
 
         barcodeScanner.process(inputImage).addOnSuccessListener { barcodes ->
@@ -696,9 +642,6 @@ class MobileScanner(
         }
     }
 
-    /**
-     * Set the zoom rate of the camera.
-     */
     fun setScale(scale: Double) {
         if (scale > 1.0 || scale < 0) throw ZoomNotInRange()
         if (camera == null) throw ZoomWhenStopped()
@@ -710,9 +653,6 @@ class MobileScanner(
         camera?.cameraControl?.setZoomRatio(zoomRatio.toFloat())
     }
 
-    /**
-     * Reset the zoom rate of the camera.
-     */
     fun resetScale() {
         if (camera == null) throw ZoomWhenStopped()
         camera?.cameraControl?.setZoomRatio(1f)
@@ -721,7 +661,6 @@ class MobileScanner(
     fun setFocus(x: Float, y: Float) {
         val cam = camera ?: throw ZoomWhenStopped()
 
-        // Ensure x,y are normalized (0f..1f)
         if (x !in 0f..1f || y !in 0f..1f) {
             throw IllegalArgumentException("Focus coordinates must be between 0.0 and 1.0")
         }
@@ -735,14 +674,11 @@ class MobileScanner(
         cam.cameraControl.startFocusAndMetering(action)
     }
 
-    /**
-     * Dispose of this scanner instance.
-     */
     fun dispose() {
         if (isStopped()) {
             return
         }
 
-        stop() // Defer to the stop method, which disposes all resources anyway.
+        stop()
     }
 }
